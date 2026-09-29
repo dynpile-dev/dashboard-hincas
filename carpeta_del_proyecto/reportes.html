@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Reportes de Hincas - Alfatek Energy</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    
+    <!-- LIBRERÍAS PARA GENERAR EXCEL EN LA NUBE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <style>
+        :root {
+            --color-primary: #0fb1a5;
+            --color-secondary: #575656;
+            --color-primary-hover: #0c8a80;
+        }
+
+        html { overflow-y: scroll; }
+
+        /* ANTIFANTASMAS: Ocultar enlaces de navegación por defecto hasta validar permisos */
+        .nav-link-restringido {
+            display: none !important;
+        }
+
+        /* ==========================================
+           DISEÑO DE MENÚ Y BARRA SUPERIOR
+           ========================================== */
+        .bg-dark, .sb-topnav.navbar { background-color: var(--color-primary) !important; }
+        .sb-sidenav-dark { background-color: #ffffff !important; border-right: 1px solid #e0e0e0; }
+        .sb-sidenav-dark .sb-sidenav-menu-heading, .sb-sidenav-dark .sb-sidenav-footer { color: var(--color-secondary) !important; opacity: 0.8; border-top: 1px solid #f0f0f0; }
+        
+        .sb-sidenav-dark .sb-sidenav-menu .nav-link { color: var(--color-primary) !important; font-weight: 500; }
+        .sb-sidenav-dark .sb-sidenav-menu .nav-link .sb-nav-link-icon { color: var(--color-primary) !important; }
+        
+        .sb-sidenav-dark .sb-sidenav-menu .nav-link:hover { color: var(--color-secondary) !important; background-color: rgba(15, 177, 165, 0.05); }
+        .sb-sidenav-dark .sb-sidenav-menu .nav-link:hover .sb-nav-link-icon { color: var(--color-primary) !important; }
+        
+        .sb-sidenav-dark .sb-sidenav-menu .nav-link.active { color: var(--color-secondary) !important; font-weight: 700; background-color: rgba(15, 177, 165, 0.1); }
+        .sb-sidenav-dark .sb-sidenav-menu .nav-link.active .sb-nav-link-icon { color: var(--color-primary) !important; }
+        
+        .sb-topnav .navbar-nav .nav-link { color: rgba(255, 255, 255, 0.8) !important; }
+        .sb-topnav .navbar-nav .nav-link:hover { color: #ffffff !important; }
+        .sb-topnav .navbar-brand { color: #ffffff !important; }
+
+        /* ==========================================
+           ESTILOS DE LA TABLA Y COLORES DE ESTADOS
+           ========================================== */
+        .card-registro {
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .card-registro .card-header {
+            background-color: #ffffff;
+            border-top: 5px solid var(--color-primary);
+            border-bottom: 1px solid #f0f0f0;
+            padding: 15px 20px;
+        }
+        
+        .card-registro .card-header h5 { color: var(--color-secondary); font-weight: 700; margin: 0; font-size: 1.1rem; }
+
+        .dataTable-table > thead > tr > th {
+            color: var(--color-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            border-bottom: 2px solid #f0f0f0;
+            background-color: #fafafa;
+        }
+
+        .dataTable-table > tbody > tr > td { vertical-align: middle; font-size: 0.85rem; color: #444; border-bottom: 1px solid #f4f4f4; }
+        .col-destacada { font-weight: 700; color: var(--color-secondary); }
+
+        /* Badges de Estados/Alertas */
+        .badge-estado {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: white;
+            display: inline-block;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        /* Colores exactos de vista */ 
+        .st-verde { background-color: #16a34a; }
+        .st-ambar { background-color: #ffc107; color: #000; }
+        .st-naranja { background-color: #f59e0b; color: white; } 
+        .st-rojo { background-color: #dc2626; }
+        .st-cafe { background-color: #8B5E3C; }
+        .st-gris { background-color: #6b7280; }
+        .st-negro { background-color: #2f2f2f; }
+        .st-azul { background-color: #963634; }
+        .st-morado { background-color: #7c3aed; }
+        .st-vacio { background-color: #e9ecef; color: #6c757d; border: 1px solid #ced4da; }
+
+        /* Botones de acción */
+        .btn-action {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            margin-right: 4px;
+            transition: all 0.2s;
+        }
+        .btn-visualizar { background-color: rgba(15, 177, 165, 0.1); color: var(--color-primary); border: 1px solid transparent; }
+        .btn-visualizar:hover:not(:disabled) { background-color: var(--color-primary); color: white; }
+        
+        .btn-descargar { background-color: #f8f9fa; color: var(--color-secondary); border: 1px solid #dee2e6; }
+        .btn-descargar:hover:not(:disabled) { background-color: #e2e6ea; }
+
+        .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        /* Loader de la tabla */
+        .table-loader { padding: 50px 0; text-align: center; }
+
+    </style>
+</head>
+<body class="sb-nav-fixed">
+    
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <a class="navbar-brand ps-3 fw-bold" href="index.html">ALFATEK Energy</a>
+        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
+        
+        <ul class="navbar-nav ms-auto me-3 me-lg-4">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown"><i class="fas fa-user fa-fw"></i></a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <a class="dropdown-item" href="#" onclick="cerrarSesionCompleta()">Cerrar Sesión</a>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_nav">
+            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+                <div class="sb-sidenav-menu">
+                    <div class="nav">
+                        <div class="sb-sidenav-menu-heading">Principal</div>
+                        <a class="nav-link" id="nav_dashboard" href="index.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div> Dashboard
+                        </a>
+                        <a class="nav-link nav-link-restringido" id="nav_creacion_subcampos" href="creacion_subcampos.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-folder-plus"></i></div> Creación Subcampos
+                        </a>
+                        <a class="nav-link nav-link-restringido" id="nav_hincas" href="hincas.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-hammer"></i></div> Hincas
+                        </a>
+                        <a class="nav-link nav-link-restringido" id="nav_historial_hinca" href="historial_hinca.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-history"></i></div> Historial de Hinca
+                        </a>
+                        <a class="nav-link active nav-link-restringido" id="nav_reportes" href="reportes.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-chart-bar"></i></div> Reportes
+                        </a>
+                        <a class="nav-link nav-link-restringido" id="nav_configuracion" href="configuracion.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-cog"></i></div> Configuración
+                        </a>
+                    </div>
+                </div>
+                <div class="sb-sidenav-footer" id="sesionFooter">
+                    <div class="small">Sesión iniciada como:</div>
+                    Cargando...
+                </div>
+            </nav>
+        </div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4 pb-5">
+                    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+                        <div>
+                            <h1 class="text-secondary fw-bold mb-0" id="pageTitle">Reportes de Hincas <span class="text-primary fs-4 ms-2">| Cargando...</span></h1>
+                            <p class="text-muted small mb-0">Visualización de datos e historial de estados por Tracker</p>
+                        </div>
+                    </div>
+
+                    <div id="alertFeedback" class="alert d-none" role="alert"></div>
+
+                    <!-- TABLA PRINCIPAL DE REGISTRO DE HINCAS -->
+                    <div class="card card-registro mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5>Registro General</h5>
+                            <button class="btn btn-sm btn-outline-secondary" id="btnActualizar">
+                                <i class="fas fa-sync-alt me-1"></i> Actualizar
+                            </button>
+                        </div>
+                        <div class="card-body px-0 pt-0">
+                            
+                            <!-- Loader -->
+                            <div id="tablaLoader" class="table-loader">
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <div class="text-muted small">Descargando registros de este proyecto...</div>
+                            </div>
+
+                            <div class="p-3 d-none" id="tablaContainer">
+                                <!-- La tabla se genera dinámicamente -->
+                            </div>
+
+                        </div>
+                    </div>
+                    
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts Base -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/scripts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
+    
+    <!-- LÓGICA FIREBASE Y EXCELJS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ============================================================================
+        // 1. SEGURIDAD Y LECTURA DE SESIÓN / PROYECTO ACTUAL
+        // ============================================================================
+        const proyectoActual = localStorage.getItem('proyecto_actual_web');
+        const userDataStr = localStorage.getItem('usuarioAlfatek') || sessionStorage.getItem('usuarioAlfatek');
+
+        if (!proyectoActual || !userDataStr) {
+            window.location.href = 'login.html'; 
+        }
+
+        const userData = JSON.parse(userDataStr);
+
+        document.getElementById('pageTitle').innerHTML = `Reportes de Hincas <span class="text-primary fs-4 ms-2">| ${proyectoActual}</span>`;
+        
+        document.getElementById('sesionFooter').innerHTML = `
+            <div class="small">Sesión iniciada como:</div>
+            <strong style="color:var(--color-primary);">${userData.Nombres}</strong><br>
+            <span class="small text-muted" style="text-transform: capitalize;">${(userData.rol || 'Usuario').replace('_', ' ')}</span><br>
+            <span class="badge bg-secondary mt-1"><i class="bi bi-building me-1"></i>${proyectoActual}</span>
+        `;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDg7Ter_I5ryqyhE_fN9DHsSOL_ftPy80c",
+            authDomain: "proyectohinca-5ef9d.firebaseapp.com",
+            projectId: "proyectohinca-5ef9d",
+            storageBucket: "proyectohinca-5ef9d.firebasestorage.app",
+            messagingSenderId: "383985129091",
+            appId: "1:383985129091:web:c87906eca43813ac6d2db6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ============================================================================
+        // CAPA DE SEGURIDAD VISUAL
+        // ============================================================================
+        const mapaModulosSeguridad = {
+            "dashboard": "nav_dashboard", "creacion_subcampos": "nav_creacion_subcampos", "hincas": "nav_hincas",
+            "historial_hinca": "nav_historial_hinca", "reportes": "nav_reportes", "configuracion": "nav_configuracion"
+        };
+
+        function encenderBotones(permisos) {
+            for (const [keyModulo, idHTML] of Object.entries(mapaModulosSeguridad)) {
+                const navElement = document.getElementById(idHTML);
+                if (navElement && permisos[keyModulo] === true) { navElement.classList.remove('nav-link-restringido'); }
+            }
+        }
+
+        function auditarURL(permisos) {
+            const paginaActual = window.location.pathname.split("/").pop();
+            let moduloActualClave = Object.keys(mapaModulosSeguridad).find(key => mapaModulosSeguridad[key].includes(paginaActual.replace('.html', '')));
+            if (!paginaActual || paginaActual === 'index.html') moduloActualClave = 'dashboard';
+            if (moduloActualClave && permisos[moduloActualClave] === false) { window.location.href = "login.html"; }
+        }
+
+        async function aplicarPermisosMatriz() {
+            const rolActivo = userData.rol ? userData.rol.toLowerCase() : "supervisor";
+            if (rolActivo === "administrador" || rolActivo === "admin") {
+                encenderBotones({ "dashboard": true, "creacion_subcampos": true, "hincas": true, "historial_hinca": true, "reportes": true, "configuracion": true }); return;
+            }
+            const cacheKey = `permisos_matriz_bd_${rolActivo}`;
+            const permisosCacheados = localStorage.getItem(cacheKey);
+            if (permisosCacheados) {
+                const misPermisosLocal = JSON.parse(permisosCacheados);
+                encenderBotones(misPermisosLocal); auditarURL(misPermisosLocal);
+            }
+            try {
+                const docSnap = await getDoc(doc(db, "Configuracion", "AccesosRoles"));
+                if (docSnap.exists()) {
+                    const misPermisosNube = docSnap.data()[rolActivo];
+                    if (misPermisosNube) {
+                        localStorage.setItem(cacheKey, JSON.stringify(misPermisosNube));
+                        if (!permisosCacheados) { encenderBotones(misPermisosNube); auditarURL(misPermisosNube); }
+                    }
+                }
+            } catch (error) { console.error("Error sincronizando capa de seguridad:", error); }
+        }
+        aplicarPermisosMatriz();
+
+        // ============================================================================
+
+        let dataTableInstance = null;
+        window.hincasDataCache = {};
+        
+        // ¡ÚNICO CAMBIO: LISTA INVERTIDA DE HINCAS DEL 17 AL 1!
+        const ORDEN_HINCAS_ESTRICTO = ['17', '16', '15', '14', '13', '12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1'];
+
+        function mostrarAlerta(mensaje, tipo) { 
+            const alertFeedback = document.getElementById('alertFeedback');
+            alertFeedback.innerHTML = mensaje;
+            alertFeedback.className = `alert alert-${tipo} d-block mb-4 shadow-sm`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => { alertFeedback.className = 'alert d-none'; }, 6000);
+        }
+
+        window.verHistorial = function(sc, sec, tk, nodo) {
+            window.location.href = `historial_hinca.html?autoSearch=true&sc=${sc}&sec=${sec}&tk=${tk}&nodo=${nodo}`;
+        };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            cargarReportes();
+            document.getElementById('btnActualizar').addEventListener('click', () => { cargarReportes(); });
+        });
+
+        function limpiarNombreVariable(key) {
+            let cleanKey = key.replace(/^[0-9a-zA-Z]+_/, '');
+            cleanKey = cleanKey.replace(/_/g, ' ');
+            cleanKey = cleanKey.replace(/\bmicras\b/g, ''); 
+            cleanKey = cleanKey.replace(/\bm\b/g, ''); 
+            cleanKey = cleanKey.replace(/\bum\b/g, ''); 
+            cleanKey = cleanKey.replace(/\bdeg\b/g, '°'); 
+            cleanKey = cleanKey.replace(/\bm3\b/g, 'm³'); 
+            cleanKey = cleanKey.trim().replace(/\s+/g, ' ');
+            return cleanKey.charAt(0).toUpperCase() + cleanKey.slice(1);
+        }
+
+        function obtenerAtributosUI(llave) {
+            let l = llave.toLowerCase();
+            let titulo = limpiarNombreVariable(llave);
+            
+            if (l.includes('geometria_cierre') || (l.includes('geometria') && l.includes('cierre'))) { titulo = "Control de Hincado tras proceso de corrección"; }
+            else if (l.includes('geometria') || l.includes('hincado')) { titulo = "Control de Hincado"; }
+            
+            else if (l.includes('zapata')) { titulo = "Instalación de Zapata"; }
+            else if (l.includes('pendiente_extraccion')) { titulo = "Pendiente Extracción de Hinca"; }
+            else if (l.includes('extraccion')) { titulo = "Extracción de Hinca"; }
+            else if (l.includes('concreto') || l.includes('pilote')) { titulo = "Instalación de Pilote de Concreto"; }
+            else if (l.includes('revirado') || l.includes('torsion')) { titulo = "Corrección: Revirado"; }
+            else if (l.includes('aplome')) { titulo = "Corrección: Aplome"; }
+            else if (l.includes('corte') || l.includes('mecanizado')) { titulo = "Tratamiento de Mecanizado"; }
+            else if (l.includes('galvanizado')) { titulo = "Tratamiento de Galvanizado"; }
+            
+            let matchIntento = l.match(/intento_(\d+)/);
+            let matchPrueba = l.match(/_pr_(\d+)/i);
+
+            if (l.includes('predrilling')) { 
+                let numPrueba = matchPrueba ? matchPrueba[1] : "1";
+                let numIntento = matchIntento ? matchIntento[1] : "1";
+                titulo = `Predrilling prueba ${numPrueba} (intento ${numIntento})`;
+            } 
+            else if (l.includes('rechazo_no_ingreso')) {
+                let numPrueba = matchPrueba ? matchPrueba[1] : "1";
+                let numIntento = matchIntento ? matchIntento[1] : "1";
+                titulo = `Rechazo no ingreso prueba ${numPrueba} (intento ${numIntento})`;
+            } 
+            else {
+                if (matchIntento) titulo += ` (Intento ${matchIntento[1]})`;
+                
+                if (l.includes('pot_cumple') && !l.includes('no_cumple')) { titulo = `POT CUMPLE: ${titulo}`; } 
+                else if (l.includes('pot_no_cumple')) { titulo = `POT NO CUMPLE: ${titulo}`; }
+            }
+            
+            return { titulo };
+        }
+
+        function obtenerUltimaFechaHora(hinca) {
+            let maxDate = 0;
+            let finalStr = '--/--/---- --:--';
+
+            function analizarFecha(d, t) {
+                if (!d || !t || typeof d !== 'string' || typeof t !== 'string' || d.includes('--') || t.includes('--')) return;
+                const partsD = d.split('/');
+                if (partsD.length !== 3) return;
+                const partsT = t.split(':');
+                const hr = parseInt(partsT[0]) || 0;
+                const min = parseInt(partsT[1]) || 0;
+                const sec = parseInt(partsT[2]) || 0;
+                const dateObj = new Date(partsD[2], partsD[1] - 1, partsD[0], hr, min, sec).getTime();
+                
+                if (!isNaN(dateObj) && dateObj > maxDate) {
+                    maxDate = dateObj;
+                    finalStr = `${d} ${t}`;
+                }
+            }
+
+            function extractDates(obj) {
+                if (!obj || typeof obj !== 'object') return;
+                let d = obj['01_fecha_registro'] || obj['1_fecha_registro'] || obj['fecha_registro'];
+                let t = obj['02_hora_registro'] || obj['2_hora_registro'] || obj['hora_registro'];
+                if (d && t) analizarFecha(d, t);
+                
+                Object.values(obj).forEach(val => {
+                    if (val && typeof val === 'object') { extractDates(val); }
+                });
+            }
+
+            extractDates(hinca);
+            return finalStr;
+        }
+
+        async function cargarReportes() {
+            const loader = document.getElementById('tablaLoader');
+            const container = document.getElementById('tablaContainer');
+
+            loader.classList.remove('d-none');
+            container.classList.add('d-none');
+
+            try {
+                const qHincas = query(
+                    collection(db, "ControlHincas"), 
+                    where("1_datos_previos.1_proyecto", "==", proyectoActual),
+                    where("enviado_a_reportes", "==", true) 
+                );
+                
+                const querySnapshot = await getDocs(qHincas);
+                
+                let arrayHincasReporte = [];
+                window.hincasDataCache = {}; 
+
+                querySnapshot.forEach((doc) => {
+                    const hinca = doc.data();
+                    const idDocumento = doc.id;
+                    
+                    window.hincasDataCache[idDocumento] = hinca;
+
+                    const scNum = parseInt(hinca['1_datos_previos']?.['4_subcampo']) || 999;
+                    const secNum = parseInt(hinca['1_datos_previos']?.['3_seccion']) || 999;
+                    const tkNum = parseInt(hinca['1_datos_previos']?.['5_numero_tracker']) || 999;
+                    const nodoStr = hinca['1_datos_previos']?.['6_numero_hinca'] || '--';
+
+                    const fechaHora = obtenerUltimaFechaHora(hinca);
+
+                    let estadoBruto = (hinca['2_auditoria']?.['5_tipo_de_evento'] || '').toUpperCase();
+                    let calidadBruto = (hinca['2_auditoria']?.['6_estado_final_de_calidad'] || '').toUpperCase();
+                    let subEventoFinalUpper = (hinca['2_auditoria']?.['7_sub_evento_final'] || '').toUpperCase();
+                    let aprobacion = (hinca.aprobacion_coordinador || "").toUpperCase();
+                    
+                    let claseColor = "st-vacio";
+                    let textoEstado = "SIN REGISTRO";
+                    let isCerrado = false; 
+
+                    if (aprobacion === "APROBADO" || estadoBruto.includes('CONFORME') || calidadBruto.includes('APROBADO')) { 
+                        claseColor = "st-verde"; textoEstado = "CONFORME / FINALIZADO"; isCerrado = true; 
+                    }
+                    else if (aprobacion === "RECHAZADO" || estadoBruto.includes('OBSERVADA') || calidadBruto.includes('OBSERVADO')) { 
+                        claseColor = "st-ambar"; textoEstado = "OBSERVADA"; 
+                    }
+                    else if (subEventoFinalUpper.includes('PENDIENTE EXTRACCION') || subEventoFinalUpper.includes('PENDIENTE EXTRACCIÓN') || estadoBruto.includes('PENDIENTE EXTRACCION') || estadoBruto.includes('PENDIENTE EXTRACCIÓN')) { 
+                        claseColor = "st-naranja"; textoEstado = "PENDIENTE EXTRACCIÓN"; 
+                    }
+                    else if (estadoBruto.includes('RECHAZO NO INGRESO') || subEventoFinalUpper.includes('RECHAZO NO INGRESO')) {
+                        claseColor = "st-naranja"; textoEstado = "RECHAZO NO INGRESO";
+                    }
+                    else if (estadoBruto.includes('EXTRACCION') || estadoBruto.includes('EXTRACCIÓN')) { 
+                        claseColor = "st-rojo"; textoEstado = "EXTRACCIÓN REALIZADA"; 
+                    }
+                    else if (estadoBruto.includes('PERFORACION') || estadoBruto.includes('PREDRILLING')) { claseColor = "st-cafe"; textoEstado = "PERFORACIÓN REALIZADA"; }
+                    else if (estadoBruto.includes('ZAPATA')) { claseColor = "st-gris"; textoEstado = "ZAPATA REALIZADA"; }
+                    else if (estadoBruto.includes('POT NO CUMPLE')) { claseColor = "st-negro"; textoEstado = "POT NO CUMPLE"; }
+                    else if (estadoBruto.includes('POT CUMPLE')) { claseColor = "st-azul"; textoEstado = "POT CUMPLE"; }
+                    else if (estadoBruto.includes('MECANIZADO')) { claseColor = "st-morado"; textoEstado = "MECANIZADO"; }
+
+                    arrayHincasReporte.push({
+                        id: idDocumento,
+                        sc: scNum,
+                        sec: secNum,
+                        tk: tkNum,
+                        nodo: nodoStr,
+                        fechaHora: fechaHora,
+                        claseColor: claseColor,
+                        textoEstado: textoEstado,
+                        isCerrado: isCerrado
+                    });
+                });
+
+                arrayHincasReporte.sort((a, b) => {
+                    if (a.sc !== b.sc) return a.sc - b.sc;
+                    if (a.sec !== b.sec) return a.sec - b.sec;
+                    if (a.tk !== b.tk) return a.tk - b.tk;
+                    
+                    let idxA = ORDEN_HINCAS_ESTRICTO.indexOf(a.nodo);
+                    let idxB = ORDEN_HINCAS_ESTRICTO.indexOf(b.nodo);
+                    if(idxA === -1) idxA = 99; 
+                    if(idxB === -1) idxB = 99;
+                    
+                    return idxA - idxB;
+                });
+
+                let rowsHtml = '';
+                arrayHincasReporte.forEach(item => {
+                    let iconCheck = item.isCerrado ? `<i class="fas fa-check-circle text-success ms-1" title="Tracker Cerrado"></i>` : `<i class="fas fa-clock text-warning ms-1" title="Tracker Abierto"></i>`;
+                    
+                    rowsHtml += `
+                        <tr>
+                            <td class="col-destacada">SC#${item.sc}</td>
+                            <td>S${item.sec}</td>
+                            <td><span class="fw-bold">TK${String(item.tk).padStart(2, '0')}</span> ${iconCheck}</td>
+                            <td class="col-destacada text-primary">${item.nodo}</td>
+                            <td>${item.fechaHora}</td>
+                            <td><span class="badge-estado ${item.claseColor}">${item.textoEstado}</span></td>
+                            <td class="text-center">
+                                <button class="btn btn-action btn-visualizar" onclick="verHistorial('${item.sc}', '${item.sec}', '${item.tk}', '${item.nodo}')" title="Visualizar datos"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-action btn-descargar" id="btnDl_${item.id}" onclick="generarReporteExcel('${item.id}')" title="Descargar Reporte"><i class="fas fa-download"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                if(dataTableInstance) {
+                    dataTableInstance.destroy();
+                    dataTableInstance = null;
+                }
+
+                // ==============================================================
+                // INYECCIÓN VISUAL ESTÉTICA PARA TABLA VACÍA SIN COLAPSAR
+                // ==============================================================
+                if (rowsHtml === '') {
+                    container.innerHTML = `
+                        <div class="d-flex flex-column align-items-center justify-content-center py-5 w-100 text-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto" style="width: 80px; height: 80px; background-color: rgba(15, 177, 165, 0.1);">
+                                <i class="fas fa-file-excel fa-2x" style="color: var(--color-primary);"></i>
+                            </div>
+                            <h5 class="fw-bold text-secondary mb-1">Sin registros disponibles</h5>
+                            <p class="text-muted small mb-0">Aún no existen Trackers generados y enviados a Reportes en este proyecto.</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <table id="tablaReportes">
+                            <thead>
+                                <tr>
+                                    <th>Subcampo</th>
+                                    <th>Sección</th>
+                                    <th>Tracker</th>
+                                    <th>Hinca</th>
+                                    <th>Último Registro</th>
+                                    <th>Estado Actual</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    `;
+                }
+
+                loader.classList.add('d-none');
+                container.classList.remove('d-none');
+
+                if (rowsHtml !== '') {
+                    const dataTableElem = document.getElementById('tablaReportes');
+                    dataTableInstance = new simpleDatatables.DataTable(dataTableElem, {
+                        searchable: true,
+                        sortable: false, 
+                        perPage: 300,    
+                        perPageSelect: [25, 50, 100, 300], 
+                        fixedHeight: true,
+                        labels: {
+                            placeholder: "Buscar registro...",
+                            perPage: "filas por página",
+                            noRows: "No hay registros disponibles",
+                            info: "Mostrando {start} a {end} de {rows} registros"
+                        }
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error al cargar reportes:", error);
+                loader.innerHTML = `<div class="text-danger fw-bold"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>Error al conectar con la base de datos.</div>`;
+            }
+        }
+
+        // ==========================================
+        // MOTOR EXCELJS (PARA INYECTAR LOS DATOS DE FIREBASE)
+        // ==========================================
+        window.generarReporteExcel = async function(idDocumento) {
+            
+            const btnHtmlOriginal = document.getElementById(`btnDl_${idDocumento}`).innerHTML;
+            document.getElementById(`btnDl_${idDocumento}`).innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+            document.getElementById(`btnDl_${idDocumento}`).disabled = true;
+
+            try {
+                const hincaData = window.hincasDataCache[idDocumento];
+                if (!hincaData) { 
+                    mostrarAlerta("Error: No se encontró la data de la hinca.", "danger"); 
+                    return; 
+                }
+
+                const nodo = hincaData['1_datos_previos']?.['6_numero_hinca'] || '';
+                const tracker = hincaData['1_datos_previos']?.['5_numero_tracker'] || '';
+
+                let arrayEventos = [];
+                let processPhotos = [];
+                let primeraAltura = null;
+                let ultimaAltura = "";
+                let ultimaInclNS = "";
+                let ultimaInclEW = "";
+                let ultimaTorsion = "";
+                let ultimaDistN = "";
+                let ultimaDistS = "";
+                let ultimaDistE = "";
+                let ultimaDistW = "";
+
+                if (hincaData['3_datos_de_proceso']) {
+                    function parseFecha(fechaStr, horaStr) {
+                        if (!fechaStr || !horaStr || fechaStr.includes('--') || horaStr.includes('--')) return 0;
+                        const pD = fechaStr.split('/');
+                        const pT = horaStr.split(':');
+                        if (pD.length !== 3) return 0;
+                        return new Date(pD[2], pD[1]-1, pD[0], pT[0]||0, pT[1]||0, pT[2]||0).getTime();
+                    }
+
+                    function buscarNodosRecursivo(nodoActual, nombreLlave) {
+                        let fecha = nodoActual['01_fecha_registro'] || nodoActual['1_fecha_registro'] || nodoActual['fecha_registro'];
+                        let hora = nodoActual['02_hora_registro'] || nodoActual['2_hora_registro'] || nodoActual['hora_registro'];
+                        
+                        if (fecha && hora) {
+                            arrayEventos.push({
+                                llave: nombreLlave,
+                                datos: nodoActual,
+                                timestamp: parseFecha(fecha, hora),
+                                fecha: fecha,
+                                hora: hora
+                            });
+                        } else {
+                            for (let [subKey, subVal] of Object.entries(nodoActual)) {
+                                if (subVal && typeof subVal === 'object') {
+                                    buscarNodosRecursivo(subVal, subKey);
+                                }
+                            }
+                        }
+                    }
+                    buscarNodosRecursivo(hincaData['3_datos_de_proceso'], "Datos_Proceso");
+                }
+                
+                arrayEventos.sort((a, b) => a.timestamp - b.timestamp);
+
+                for (let i = 0; i < arrayEventos.length; i++) {
+                    const d = arrayEventos[i].datos;
+                    
+                    let h = d['9_altura_medida_terreno_m'];
+                    if (h !== undefined && h !== "") {
+                        if (primeraAltura === null) primeraAltura = parseFloat(h);
+                        ultimaAltura = h;
+                    }
+
+                    if (d['a10_inclinacion_norte_sur_deg'] !== undefined) ultimaInclNS = d['a10_inclinacion_norte_sur_deg'];
+                    if (d['a11_inclinacion_este_oeste_deg'] !== undefined) ultimaInclEW = d['a11_inclinacion_este_oeste_deg'];
+                    if (d['a12_torsion_deg'] !== undefined) ultimaTorsion = d['a12_torsion_deg'];
+                    if (d['5_distancia_norte_m'] !== undefined) ultimaDistN = d['5_distancia_norte_m'];
+                    if (d['6_distancia_sur_m'] !== undefined) ultimaDistS = d['6_distancia_sur_m'];
+                    if (d['7_distancia_este_m'] !== undefined) ultimaDistE = d['7_distancia_este_m'];
+                    if (d['8_distancia_oeste_m'] !== undefined) ultimaDistW = d['8_distancia_oeste_m'];
+
+                    if (processPhotos.length < 3) {
+                        let photoUrl = null;
+                        for (let key in d) {
+                            if (key.includes('base64')) continue; 
+                            if (key.includes('url') && d[key] && typeof d[key] === 'string' && d[key].includes('firebasestorage')) {
+                                photoUrl = d[key];
+                                break;
+                            }
+                        }
+                        
+                        if (photoUrl) {
+                            processPhotos.push({
+                                url: photoUrl,
+                                nombre: obtenerAtributosUI(arrayEventos[i].llave).titulo,
+                                fechaHora: `${arrayEventos[i].fecha} - ${arrayEventos[i].hora}`
+                            });
+                        }
+                    }
+                }
+
+                const datosPrevios = hincaData['1_datos_previos'] || {};
+
+                const usuariosCacheExcel = {};
+                let coordinadorCierreD9 = "No registrado";
+                
+                try {
+                    const [snapUsuariosMovil, snapUsuariosWeb] = await Promise.all([
+                        getDocs(collection(db, "Usuarios")),
+                        getDocs(collection(db, "Usuarios_web"))
+                    ]);
+
+                    const procesarDocUsuario = (docSnap) => {
+                        const u = docSnap.data();
+                        let userCorreo = (u.correo || u.email || docSnap.id || '').trim().toLowerCase();
+                        
+                        let nombres = u.nombres || u.Nombres || '';
+                        let apellidos = u.apellidos || u.Apellidos || '';
+                        let dni = u.dni || u.DNI || '---';
+                        let rol = (u.rol || '').toLowerCase();
+
+                        if (userCorreo) {
+                            usuariosCacheExcel[userCorreo] = {
+                                nombreCompleto: `${nombres} ${apellidos}`.trim(),
+                                dni: dni
+                            };
+                        }
+
+                        if (rol === 'coordinador_cierre') {
+                            coordinadorCierreD9 = `${nombres} ${apellidos}`.trim();
+                        }
+                    };
+
+                    snapUsuariosMovil.forEach(procesarDocUsuario);
+                    snapUsuariosWeb.forEach(procesarDocUsuario);
+
+                } catch (error) {
+                    console.warn("Error cargando caché de usuarios:", error);
+                }
+
+                let responsableRevisionH9 = "No registrado"; 
+                let urlFirmaActiva = null;
+
+                try {
+                    const firmasSnap = await getDocs(collection(db, "Firmas_Globales"));
+                    firmasSnap.forEach(docSnap => {
+                        const data = docSnap.data();
+                        if (data.activa === true) {
+                            responsableRevisionH9 = data.nombre_responsable || "No registrado";
+                            urlFirmaActiva = data.url_firma;
+                        }
+                    });
+                } catch (error) {
+                    console.warn("Error leyendo Firmas_Globales:", error);
+                }
+
+                const URL_PLANTILLA_EN_LA_NUBE = "https://firebasestorage.googleapis.com/v0/b/proyectohinca-5ef9d.firebasestorage.app/o/Plantillas%2Fplantilla_hinca.xlsx?alt=media&token=c4300f80-d7d7-4397-bc5f-a17759efd11c";
+                const response = await fetch(URL_PLANTILLA_EN_LA_NUBE);
+                const arrayBuffer = await response.arrayBuffer();
+                
+                const workbook = new ExcelJS.Workbook();
+                await workbook.xlsx.load(arrayBuffer);
+                const worksheet = workbook.getWorksheet(1); 
+
+                worksheet.getCell('D6').value = datosPrevios['1_proyecto'] || proyectoActual; 
+                worksheet.getCell('H7').value = datosPrevios['3_seccion'] || "";
+                worksheet.getCell('D7').value = datosPrevios['4_subcampo'] || "";
+                worksheet.getCell('D8').value = datosPrevios['5_numero_tracker'] || "";
+                worksheet.getCell('H8').value = datosPrevios['6_numero_hinca'] || "";
+                worksheet.getCell('L8').value = datosPrevios['7_tipo_de_hinca'] || "";
+                worksheet.getCell('H6').value = "ELECNOR"; 
+                worksheet.getCell('D10').value = "Terminado/conforme"; 
+                
+                worksheet.getCell('D9').value = coordinadorCierreD9;   
+                worksheet.getCell('H9').value = responsableRevisionH9; 
+                
+                const cuadrilla = hincaData['1_datos_previos']?.['2_cuadrilla'] || 'Sin registrar';
+
+                let potHeadersInyectados = new Set();
+                let totalFilasAInyectar = arrayEventos.length;
+
+                arrayEventos.forEach(ev => {
+                    let l = ev.llave.toLowerCase();
+                    let isPot = false;
+                    let pType = "";
+                    
+                    if (l.includes('pot_no_cumple')) { isPot = true; pType = "POT NO CUMPLE"; }
+                    else if (l.includes('pot_cumple')) { isPot = true; pType = "POT CUMPLE"; }
+
+                    if (isPot) {
+                        let match = l.match(/intento_(\d+)/);
+                        let attempt = match ? match[1] : "1";
+                        let pKey = `${pType}_${attempt}`;
+                        
+                        if (!potHeadersInyectados.has(pKey)) {
+                            potHeadersInyectados.add(pKey);
+                            totalFilasAInyectar++; 
+                        }
+                    }
+                });
+
+                let offset = 0;
+                const FILAS_BASE = 8; 
+
+                if (totalFilasAInyectar > FILAS_BASE) {
+                    offset = totalFilasAInyectar - FILAS_BASE;
+                    
+                    let oldMerges = [];
+                    if (worksheet._merges) {
+                        for (const key in worksheet._merges) {
+                            const m = worksheet._merges[key].model;
+                            oldMerges.push({ top: m.top, bottom: m.bottom, left: m.left, right: m.right });
+                        }
+                    }
+                    
+                    oldMerges.forEach(m => {
+                        try { worksheet.unmergeCells(m.top, m.left, m.bottom, m.right); } catch(e){}
+                    });
+                    
+                    for (let k = 0; k < offset; k++) {
+                        worksheet.insertRow(25 + k, []);
+                    }
+                    
+                    const templateRow = worksheet.getRow(24);
+                    for (let k = 0; k < offset; k++) {
+                        const newRow = worksheet.getRow(25 + k);
+                        newRow.height = templateRow.height;
+                        for (let col = 1; col <= 15; col++) { 
+                            const tCell = templateRow.getCell(col);
+                            const nCell = newRow.getCell(col);
+                            nCell.border = tCell.border;
+                            nCell.font = tCell.font;
+                            nCell.fill = tCell.fill;
+                            nCell.alignment = tCell.alignment;
+                        }
+                    }
+                    
+                    oldMerges.forEach(m => {
+                        let t = m.top, b = m.bottom;
+                        if (t >= 25) { t += offset; b += offset; } else if (b >= 25) { b += offset; }
+                        try { worksheet.mergeCells(t, m.left, b, m.right); } catch(e){}
+                    });
+                }
+
+                let currentRow = 17;
+                let potsRegistradosEnBucle = new Set();
+                worksheet.getColumn('C').width = 18; 
+
+                for (let i = 0; i < arrayEventos.length; i++) {
+                    const ev = arrayEventos[i];
+                    
+                    let nombreProceso = obtenerAtributosUI(ev.llave).titulo; 
+                    let llaveLow = ev.llave.toLowerCase();
+                    
+                    let emailRegistro = (ev.datos['03_usuario_email'] || ev.datos['3_usuario_email'] || ev.datos['usuario_email'] || ev.datos['03_supervisor_email'] || '').trim().toLowerCase();
+                    let nombreResponsable = "Usuario de campo";
+                    let dniResponsable = "---";
+
+                    let usuarioEncontrado = usuariosCacheExcel[emailRegistro];
+                    if (!usuarioEncontrado && emailRegistro) {
+                        let claveEncontrada = Object.keys(usuariosCacheExcel).find(k => k.includes(emailRegistro) || emailRegistro.includes(k));
+                        if (claveEncontrada) { usuarioEncontrado = usuariosCacheExcel[claveEncontrada]; }
+                    }
+
+                    if (usuarioEncontrado) {
+                        nombreResponsable = usuarioEncontrado.nombreCompleto;
+                        dniResponsable = usuarioEncontrado.dni;
+                    } else if (emailRegistro) {
+                        nombreResponsable = emailRegistro; 
+                    }
+
+                    let isPot = false;
+                    let pType = "";
+                    if (llaveLow.includes('pot_no_cumple')) { isPot = true; pType = "POT NO CUMPLE"; }
+                    else if (llaveLow.includes('pot_cumple')) { isPot = true; pType = "POT CUMPLE"; }
+
+                    if (isPot) {
+                        let match = llaveLow.match(/intento_(\d+)/);
+                        let attempt = match ? match[1] : "1";
+                        let pKey = `${pType}_${attempt}`;
+
+                        if (!potsRegistradosEnBucle.has(pKey)) {
+                            potsRegistradosEnBucle.add(pKey);
+
+                            let headerColor = pType === "POT CUMPLE" ? "963634" : "2F2F2F";
+                            let headerTitle = `PRUEBA: ${pType}`;
+
+                            const hCellB = worksheet.getCell(`B${currentRow}`);
+                            hCellB.style = Object.assign({}, hCellB.style, {
+                                fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + headerColor } }
+                            });
+                            const hBorderStyle = worksheet.getCell(`C${currentRow}`).border;
+                            if (hBorderStyle) hCellB.border = hBorderStyle;
+
+                            worksheet.getCell(`C${currentRow}`).value = `${ev.fecha} - ${ev.hora}`;
+                            worksheet.getCell(`D${currentRow}`).value = headerTitle;
+                            worksheet.getCell(`F${currentRow}`).value = cuadrilla;
+                            worksheet.getCell(`G${currentRow}`).value = "";
+                            worksheet.getCell(`I${currentRow}`).value = "Pendiente";
+                            worksheet.getCell(`K${currentRow}`).value = nombreResponsable;
+                            worksheet.getCell(`M${currentRow}`).value = dniResponsable;
+
+                            ['C','D','F','G','I','K','M'].forEach(col => {
+                                worksheet.getCell(`${col}${currentRow}`).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                            });
+
+                            currentRow++; 
+                        }
+                    }
+
+                    let colorHex = "FFFFFF"; 
+                    let textUpper = nombreProceso.toUpperCase();
+                    
+                    if (i === arrayEventos.length - 1) { colorHex = "16A34A"; } 
+                    else if (textUpper.includes("PENDIENTE EXTRACCION") || textUpper.includes("PENDIENTE EXTRACCIÓN")) { colorHex = "F59E0B"; } 
+                    else if (textUpper.includes("RECHAZO NO INGRESO")) { colorHex = "F59E0B"; } 
+                    else if (textUpper.includes("EXTRACCION") || textUpper.includes("EXTRACCIÓN")) { colorHex = "DC2626"; } 
+                    else if (textUpper.includes("MECANIZADO") || textUpper.includes("GALVANIZADO") || textUpper.includes("CORTE")) { colorHex = "7C3AED"; } 
+                    else if (textUpper.includes("ZAPATA") || textUpper.includes("PILOTE") || textUpper.includes("CONCRETO")) { colorHex = "6B7280"; } 
+                    else if (textUpper.includes("REVIRADO") || textUpper.includes("TORSION")) { colorHex = "FABF8F"; }
+                    else if (textUpper.includes("APLOME")) { colorHex = "556B2F"; }
+                    else if (textUpper.includes("PREDRILLING") || textUpper.includes("PERFORACION")) { colorHex = "8B5E3C"; }
+                    else if (textUpper.includes("HINCADO")) { colorHex = "3B82F6"; }
+
+                    const cellB = worksheet.getCell(`B${currentRow}`);
+                    cellB.style = Object.assign({}, cellB.style, {
+                        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colorHex } }
+                    });
+                    
+                    const borderStyle = worksheet.getCell(`C${currentRow}`).border;
+                    if (borderStyle) {
+                        worksheet.getCell(`B${currentRow}`).border = borderStyle;
+                    }
+
+                    worksheet.getCell(`C${currentRow}`).value = `${ev.fecha} - ${ev.hora}`;
+                    worksheet.getCell(`D${currentRow}`).value = nombreProceso;
+                    worksheet.getCell(`F${currentRow}`).value = cuadrilla;
+                    worksheet.getCell(`G${currentRow}`).value = ""; 
+                    
+                    if (i === arrayEventos.length - 1) {
+                        worksheet.getCell(`I${currentRow}`).value = "Terminado/conforme";
+                    } else {
+                        worksheet.getCell(`I${currentRow}`).value = "Pendiente";
+                    }
+
+                    worksheet.getCell(`K${currentRow}`).value = nombreResponsable;
+                    worksheet.getCell(`M${currentRow}`).value = dniResponsable;
+                    
+                    ['C','D','F','G','I','K','M'].forEach(col => {
+                        worksheet.getCell(`${col}${currentRow}`).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                    });
+                    
+                    currentRow++;
+                }
+
+                if (totalFilasAInyectar < FILAS_BASE) {
+                    for(let j = currentRow; j <= 24; j++) {
+                        const cellB = worksheet.getCell(`B${j}`);
+                        cellB.style = Object.assign({}, cellB.style, {
+                            fill: { type: 'pattern', pattern: 'none' }
+                        });
+                        worksheet.getCell(`C${j}`).value = "";
+                        worksheet.getCell(`D${j}`).value = "";
+                        worksheet.getCell(`E${j}`).value = "";
+                        worksheet.getCell(`F${j}`).value = "";
+                        worksheet.getCell(`G${j}`).value = "";
+                        worksheet.getCell(`H${j}`).value = "";
+                        worksheet.getCell(`I${j}`).value = "";
+                    }
+                }
+
+                worksheet.getCell(`D${27 + offset}`).value = hincaData.altura_diseno || "";
+                worksheet.getCell(`G${27 + offset}`).value = ultimaAltura;
+                worksheet.getCell(`D${28 + offset}`).value = ultimaInclNS;
+                worksheet.getCell(`G${28 + offset}`).value = ultimaInclEW;
+
+                let corteMecanizado = 0;
+                if (primeraAltura !== null && ultimaAltura !== "") {
+                    corteMecanizado = primeraAltura - parseFloat(ultimaAltura);
+                    if (Math.abs(corteMecanizado) < 0.001) corteMecanizado = 0; 
+                }
+                worksheet.getCell(`D${29 + offset}`).value = corteMecanizado !== 0 ? parseFloat(corteMecanizado.toFixed(2)) : 0;
+                
+                worksheet.getCell(`G${29 + offset}`).value = ultimaTorsion;
+                worksheet.getCell(`D${30 + offset}`).value = ultimaDistN;
+                worksheet.getCell(`G${30 + offset}`).value = ultimaDistS;
+                worksheet.getCell(`D${31 + offset}`).value = ultimaDistE;
+                worksheet.getCell(`G${31 + offset}`).value = ultimaDistW;
+
+                worksheet.getCell(`J${27 + offset}`).value = "CONFORME";
+                worksheet.getCell(`J${28 + offset}`).value = "CONFORME";
+                worksheet.getCell(`J${29 + offset}`).value = "SI";
+                worksheet.getCell(`J${30 + offset}`).value = "SI";
+                worksheet.getCell(`J${31 + offset}`).value = "SI";                
+                
+                const historialTexto = JSON.stringify(hincaData).toLowerCase();
+                if (historialTexto.includes("pot cumple") || historialTexto.includes("pot no cumple") || 
+                    historialTexto.includes("pot_cumple") || historialTexto.includes("pot_no_cumple")) {
+                    worksheet.getCell(`J${32 + offset}`).value = "SI";
+                } else {
+                    worksheet.getCell(`J${32 + offset}`).value = "N.A";
+                }
+                
+                worksheet.getCell(`J${33 + offset}`).value = "CONFORME";
+
+                for (let idx = 0; idx < processPhotos.length; idx++) {
+                    try {
+                        const imgData = processPhotos[idx];
+                        const res = await fetch(imgData.url);
+                        const blob = await res.blob();
+                        const imgBuffer = await blob.arrayBuffer();
+
+                        const imageId = workbook.addImage({
+                            buffer: imgBuffer,
+                            extension: 'png', 
+                        });
+
+                        const colIndices = [1, 4, 7]; 
+                        const colTarget = colIndices[idx]; 
+                        const rowTarget = 46 + offset; 
+
+                        worksheet.addImage(imageId, {
+                            tl: { col: colTarget + 0.5 , row: rowTarget + 0.1 }, 
+                            ext: { width: 240, height: 80 } 
+                        });
+
+                        const colLetter = ['B', 'E', 'H'][idx];
+                        const cellName = worksheet.getCell(`${colLetter}${50 + offset}`);
+                        const cellDate = worksheet.getCell(`${colLetter}${51 + offset}`);
+
+                        cellName.value = imgData.nombre;
+                        cellDate.value = imgData.fechaHora;
+
+                        cellName.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                        cellDate.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                        cellName.font = { size: 8, bold: true, color: { argb: 'FF575656' } };
+                        cellDate.font = { size: 8, color: { argb: 'FF575656' } };
+
+                    } catch (e) {
+                        console.error("Error al inyectar foto " + idx, e);
+                    }
+                }
+
+                if (urlFirmaActiva) {
+                    try {
+                        const imgResponse = await fetch(urlFirmaActiva);
+                        const imgBlob = await imgResponse.blob();
+                        const imgBuffer = await imgBlob.arrayBuffer();
+
+                        const imageId = workbook.addImage({
+                            buffer: imgBuffer,
+                            extension: 'png', 
+                        });
+
+                        const colFirma = 10; 
+                        const rowFirma = 45 + offset; 
+
+                        worksheet.addImage(imageId, {
+                            tl: { col: colFirma + 0.3 , row: rowFirma + 0.3 }, 
+                            ext: { width: 243, height: 100 } 
+                        });
+                        
+                    } catch (imgError) {
+                        console.error("No se pudo incrustar la firma", imgError);
+                    }
+                }
+                
+                const excelBuffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+                saveAs(blob, `Reporte_Hinca_${nodo}_TK${tracker}.xlsx`);
+
+                mostrarAlerta("Reporte generado con éxito.", "success");
+
+            } catch (error) {
+                console.error("Error al intentar generar Excel:", error);
+                mostrarAlerta("Hubo un problema descargando la plantilla o generando el Excel.", "danger");
+            } finally {
+                document.getElementById(`btnDl_${idDocumento}`).innerHTML = btnHtmlOriginal;
+                document.getElementById(`btnDl_${idDocumento}`).disabled = false;
+            }
+        }
+
+        window.cerrarSesionCompleta = function() {
+            localStorage.removeItem('usuarioAlfatek');
+            localStorage.removeItem('usuario_logueado_email');
+            localStorage.removeItem('id_usuario_actual');
+            localStorage.removeItem('proyecto_actual_web');
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        };
+    </script>
+</body>
+</html>
