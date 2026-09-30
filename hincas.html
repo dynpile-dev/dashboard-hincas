@@ -646,11 +646,15 @@
                     maxTimeTor = time;
                 }
 
-                if (nodo['5_distancia_norte_m'] !== undefined && time >= maxTimeDist) {
-                    result.distN = nodo['5_distancia_norte_m'];
-                    result.distS = nodo['6_distancia_sur_m'];
-                    result.distE = nodo['7_distancia_este_m'];
-                    result.distW = nodo['8_distancia_oeste_m'];
+                if ((nodo['5_distancia_norte_m'] !== undefined || 
+                    nodo['6_distancia_sur_m'] !== undefined || 
+                    nodo['7_distancia_este_m'] !== undefined || 
+                    nodo['8_distancia_oeste_m'] !== undefined) && time >= maxTimeDist) {
+     
+                    result.distN = nodo['5_distancia_norte_m'] !== undefined ? nodo['5_distancia_norte_m'] : "-";
+                    result.distS = nodo['6_distancia_sur_m'] !== undefined ? nodo['6_distancia_sur_m'] : "-";
+                    result.distE = nodo['7_distancia_este_m'] !== undefined ? nodo['7_distancia_este_m'] : "-";
+                    result.distW = nodo['8_distancia_oeste_m'] !== undefined ? nodo['8_distancia_oeste_m'] : "-";
                     maxTimeDist = time;
                 }
             }
