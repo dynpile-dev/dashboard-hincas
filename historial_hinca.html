@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="Dashboard Alfatek Energy" />
+    <meta name="description" content="Historial de Hincas Alfatek" />
     <meta name="author" content="Alfatek Energy" />
     <title>Historial de Hinca - Alfatek Energy</title>
     
@@ -390,7 +390,7 @@
         const db = getFirestore(app);
 
         // ============================================================================
-        // [NUEVO] CAPA DE SEGURIDAD VISUAL: MOSTRAR SOLO MÓDULOS PERMITIDOS (ANTIFANTASMA)
+        // CAPA DE SEGURIDAD VISUAL: MOSTRAR SOLO MÓDULOS PERMITIDOS (ANTIFANTASMA)
         // ============================================================================
 
         const mapaModulosSeguridad = {
@@ -446,10 +446,7 @@
                 if (docSnap.exists()) {
                     const misPermisosNube = docSnap.data()[rolActivo];
                     if (misPermisosNube) {
-                        // Guardamos para que el siguiente clic a otra pestaña sea instantáneo
                         localStorage.setItem(cacheKey, JSON.stringify(misPermisosNube));
-                        
-                        // Si no teníamos memoria caché (es la primera vez que entra), lo aplicamos ahora.
                         if (!permisosCacheados) {
                             encenderBotones(misPermisosNube);
                             auditarURL(misPermisosNube);
@@ -458,7 +455,6 @@
                 }
             } catch (error) {
                 console.error("Error sincronizando capa de seguridad:", error);
-                // Si falla el internet y no hay caché, aplicamos protección por defecto
                 if (!permisosCacheados) {
                     const permisosDefault = { dashboard: true, creacion_subcampos: false, hincas: true, historial_hinca: true, reportes: true, configuracion: false };
                     encenderBotones(permisosDefault);
@@ -467,9 +463,7 @@
             }
         }
 
-        // Ejecutar de inmediato
         aplicarPermisosMatriz();
-        // ============================================================================
 
         // FUNCIÓN GLOBAL SEGURA PARA ABRIR IMÁGENES EN ALTA CALIDAD DESDE STORAGE
         window.abrirEvidencia = function(src) {
@@ -533,7 +527,6 @@
                         selTracker.value = tkParam;
                         document.getElementById('selBusquedaNodo').value = nodoParam;
 
-                        // Ejecutamos el botón de búsqueda de manera automática
                         setTimeout(() => {
                             document.getElementById('btnBuscarHistorial').click();
                         }, 300);
@@ -606,19 +599,14 @@
                 btnBuscar.disabled = true;
 
                 try {
-                    // =========================================================================
-                    // CONSTRUCCIÓN DEL ID CON EL PREFIJO DEL PROYECTO
-                    // =========================================================================
                     const prefijoProyecto = (proyectoActual && proyectoActual.trim() !== '') ? proyectoActual.replace(/[^a-zA-Z0-9]/g, '_') : 'DEFAULT';
                     const docId = `${prefijoProyecto}_SEC${sec}_SUB${sc}_TK${tk}_H${nodo}`;
-                    // =========================================================================
 
                     const docSnap = await getDoc(doc(db, "ControlHincas", docId));
 
                     if(docSnap.exists()) {
                         const data = docSnap.data();
                         
-                        // [CANDADO DE SEGURIDAD] Validamos que el proyecto de la hinca encontrada coincida
                         const proyectoHinca = data['1_datos_previos']?.['1_proyecto'] || '';
                         if (proyectoHinca && proyectoHinca !== proyectoActual) {
                             mostrarAlertaEstetica("La hinca solicitada pertenece a otro proyecto en el sistema. Verifique su búsqueda.");
@@ -658,59 +646,41 @@
             }
 
             function limpiarNombreVariable(key) {
-                // Removemos el número inicial (ej. "5_")
                 let cleanKey = key.replace(/^[0-9a-zA-Z]+_/, '');
-                
-                // Reemplazamos guiones bajos por espacios
                 cleanKey = cleanKey.replace(/_/g, ' ');
-                
-                // Limpieza de sufijos técnicos molestos para el usuario
                 cleanKey = cleanKey.replace(/\bmicras\b/g, ''); 
                 cleanKey = cleanKey.replace(/\bm\b/g, ''); 
                 cleanKey = cleanKey.replace(/\bum\b/g, ''); 
                 cleanKey = cleanKey.replace(/\bdeg\b/g, '°'); 
                 cleanKey = cleanKey.replace(/\bm3\b/g, 'm³'); 
-                
-                // Capitalizamos la primera letra y removemos espacios dobles
                 cleanKey = cleanKey.trim().replace(/\s+/g, ' ');
                 return cleanKey.charAt(0).toUpperCase() + cleanKey.slice(1);
             }
 
-            // Interpreta el nombre de la llave para asignarle un estilo visual estandarizado
             function obtenerAtributosUI(llave) {
                 let l = llave.toLowerCase();
                 let titulo = limpiarNombreVariable(llave);
                 let icon = 'fa-info-circle';
                 let color = 'icon-secondary';
                 
-                // === LÓGICA DE CIERRE GEOMÉTRICO (Prioridad Alta) ===
                 if (l.includes('geometria_cierre') || (l.includes('geometria') && l.includes('cierre'))) { 
                     icon = 'fa-hammer'; color = 'icon-success'; titulo = "Control de Hincado tras proceso de corrección"; 
                 }
                 else if (l.includes('geometria') || l.includes('hincado')) { icon = 'fa-hammer'; color = 'icon-success'; titulo = "Control de Hincado"; }
-                
-                // === DEMÁS PROCESOS ===
                 else if (l.includes('zapata')) { icon = 'fa-cube'; color = 'icon-secondary'; titulo = "Instalación de Zapata"; }
-                
-                // === DIFERENCIACIÓN CLAVE ===
                 else if (l.includes('pendiente_extraccion')) { icon = 'fa-lock'; color = 'icon-warning'; titulo = "Pendiente Extracción de Hinca"; }
                 else if (l.includes('extraccion')) { icon = 'fa-arrow-up'; color = 'icon-danger'; titulo = "Extracción de Hinca"; }
-                
                 else if (l.includes('concreto') || l.includes('pilote')) { icon = 'fa-fill-drip'; color = 'icon-secondary'; titulo = "Instalación de Pilote de Concreto"; }
                 else if (l.includes('revirado') || l.includes('torsion')) { icon = 'fa-undo-alt'; color = 'icon-purple'; titulo = "Corrección: Revirado"; }
                 else if (l.includes('aplome')) { icon = 'fa-ruler-vertical'; color = 'icon-primary'; titulo = "Corrección: Aplome"; }
                 else if (l.includes('corte') || l.includes('mecanizado')) { icon = 'fa-cut'; color = 'icon-primary'; titulo = "Tratamiento de Mecanizado"; }
                 else if (l.includes('galvanizado')) { icon = 'fa-spray-can'; color = 'icon-info'; titulo = "Tratamiento de Galvanizado"; }
                 
-                // Agregar sufijos si derivan de pruebas POT
                 if (l.includes('pot_cumple') && !l.includes('no_cumple')) titulo += " [Prueba POT Cumple]";
                 else if (l.includes('pot_no_cumple')) titulo += " [Prueba POT No Cumple]";
                 
-                // ====================================================================
-                // FORMATO QUIRÚRGICO: Predrilling y Rechazo No Ingreso
-                // ====================================================================
                 let matchIntento = l.match(/intento_(\d+)/);
-                let matchPrueba = l.match(/_pr_(\d+)/i); // i flag para que agarre _pr_ o _PR_
+                let matchPrueba = l.match(/_pr_(\d+)/i); 
 
                 if (l.includes('predrilling')) { 
                     icon = 'fa-tools'; color = 'icon-brown'; 
@@ -724,9 +694,7 @@
                     let numIntento = matchIntento ? matchIntento[1] : "1";
                     titulo = `Rechazo no ingreso prueba ${numPrueba} (intento ${numIntento})`;
                 } 
-                // ====================================================================
                 else {
-                    // Si no es ninguno de los dos, simplemente le agregamos el intento general si lo tiene
                     if (matchIntento) titulo += ` (Intento ${matchIntento[1]})`;
                 }
                 
@@ -741,14 +709,10 @@
 
                 // 1) SOLO BUSCAR EVENTOS DENTRO DE "3_datos_de_proceso" (Se ignora 2_auditoria)
                 if (data['3_datos_de_proceso']) {
-                    
-                    // Función recursiva para escarbar en carpetas anidadas
                     function buscarNodosRecursivo(nodoActual, nombreLlave) {
-                        
                         let fecha = nodoActual['01_fecha_registro'] || nodoActual['1_fecha_registro'] || nodoActual['fecha_registro'];
                         let hora = nodoActual['02_hora_registro'] || nodoActual['2_hora_registro'] || nodoActual['hora_registro'];
                         
-                        // Si el objeto actual tiene una fecha y hora, es un proceso oficial de campo
                         if (fecha && hora) {
                             arrayEventos.push({
                                 llave: nombreLlave,
@@ -758,7 +722,6 @@
                                 hora: hora
                             });
                         } else {
-                            // Si no tiene fecha, puede ser un contenedor, iteramos sobre sus hijos
                             for (let [subKey, subVal] of Object.entries(nodoActual)) {
                                 if (subVal && typeof subVal === 'object') {
                                     buscarNodosRecursivo(subVal, subKey);
@@ -766,74 +729,87 @@
                             }
                         }
                     }
-                    
-                    // Iniciar la búsqueda en toda la carpeta de proceso
                     buscarNodosRecursivo(data['3_datos_de_proceso'], "Datos_Proceso");
                 }
 
-                // 2) EXTRAER MODIFICACIONES WEB (NUEVO HISTORIAL) Y/O VALIDACIÓN LEGACY
-                if (data['5_historial_web']) {
-                    for (let modKey in data['5_historial_web']) {
-                        let modData = data['5_historial_web'][modKey];
-                        
-                        let f = modData.fecha || "--/--/----";
-                        let h = modData.hora || "--:--:--";
-                        let tsValidacion = parseFecha(f, h);
-                        if(tsValidacion === 0) tsValidacion = Date.now(); 
-                        
-                        let accion = modData.Accion || "Modificación Web";
-                        let detalle = modData.detalle || "";
-                        let correoCoordinador = modData.usuario || "Coordinador Web";
-                        
-                        let iconClass = 'icon-primary';
-                        let iconHtml = 'fa-desktop';
-                        
-                        let accionUpper = accion.toUpperCase();
-                        if (accionUpper.includes('APROBACI')) {
-                            iconClass = 'icon-success'; iconHtml = 'fa-check-double';
-                        } else if (accionUpper.includes('RECHAZO')) {
-                            iconClass = 'icon-danger'; iconHtml = 'fa-times-circle';
-                        } else if (accionUpper.includes('LIBERACI')) {
-                            iconClass = 'icon-warning'; iconHtml = 'fa-unlock';
-                        } else if (accionUpper.includes('ALTURA')) {
-                            iconClass = 'icon-info'; iconHtml = 'fa-ruler-vertical';
-                        } else if (accionUpper.includes('OBSERVACI')) {
-                            iconClass = 'icon-secondary'; iconHtml = 'fa-comment-dots';
-                        }
+                // =========================================================================
+                // 2) EXTRAER MODIFICACIONES WEB (NUEVO HISTORIAL)
+                // =========================================================================
+                let historialWebAgregado = false;
 
-                        let extraUI = '';
-                        if (modData['Altura_diseño'] !== undefined) {
-                            extraUI += `<li><b>Altura de Diseño:</b> <span class="text-primary fw-bold">${modData['Altura_diseño']} m</span></li>`;
-                        }
-                        if (modData['Validación Altura Diseño'] !== undefined) {
-                            extraUI += `<li><b>Validación:</b> <span>${modData['Validación Altura Diseño']}</span></li>`;
-                        }
-                        if (modData['Observacion'] !== undefined) {
-                            extraUI += `<li><b>Observación:</b> <span class="fst-italic text-muted">"${modData['Observacion']}"</span></li>`;
-                        }
-
-                        let htmlValidacion = `
-                            <li class="timeline-item">
-                                <div class="timeline-icon ${iconClass}"><i class="fas ${iconHtml}"></i></div>
-                                <div class="timeline-content" style="border-left: 4px solid var(--color-primary); background-color: #f4fafe;">
-                                    <div class="timeline-title">${accion} <span class="badge bg-secondary ms-2" style="font-size: 0.65rem;">PORTAL WEB</span></div>
-                                    <div class="timeline-date">
-                                        <i class="far fa-clock me-1"></i> ${f} - ${h} 
-                                        <span class="ms-3"><i class="far fa-user-circle me-1 text-primary"></i> ${correoCoordinador}</span>
-                                    </div>
-                                    <div class="timeline-body mt-2">
-                                        <p class="mb-2 text-dark">${detalle}</p>
-                                        ${extraUI !== '' ? `<div class="bg-white p-2 rounded border shadow-sm"><ul class="mb-0 ps-3">${extraUI}</ul></div>` : ''}
-                                    </div>
-                                </div>
-                            </li>
-                        `;
-                        arrayEventos.push({ timestamp: tsValidacion, html: htmlValidacion });
-                    }
-                } 
-                // MANTENEMOS EL CÓDIGO ORIGINAL COMO FALLBACK PARA HINCAS ANTIGUAS SIN EL NODO 5_historial_web
-                else if (data.aprobacion_coordinador || data.altura_diseno !== undefined || data.observacion) {
+                function procesarEventoWeb(modData) {
+                    historialWebAgregado = true;
+                    let f = modData.fecha || "--/--/----";
+                    let h = modData.hora || "--:--:--";
+                    let tsValidacion = parseFecha(f, h);
+                    if(tsValidacion === 0) tsValidacion = Date.now(); 
                     
+                    let accion = modData.Accion || "Modificación Web";
+                    let detalle = modData.detalle || "";
+                    let correoCoordinador = modData.usuario || "Coordinador Web";
+                    
+                    let iconClass = 'icon-primary';
+                    let iconHtml = 'fa-desktop';
+                    
+                    let accionUpper = accion.toUpperCase();
+                    if (accionUpper.includes('APROBACI')) {
+                        iconClass = 'icon-success'; iconHtml = 'fa-check-double';
+                    } else if (accionUpper.includes('RECHAZO')) {
+                        iconClass = 'icon-danger'; iconHtml = 'fa-times-circle';
+                    } else if (accionUpper.includes('LIBERACI')) {
+                        iconClass = 'icon-warning'; iconHtml = 'fa-unlock';
+                    } else if (accionUpper.includes('ALTURA')) {
+                        iconClass = 'icon-info'; iconHtml = 'fa-ruler-vertical';
+                    } else if (accionUpper.includes('OBSERVACI')) {
+                        iconClass = 'icon-secondary'; iconHtml = 'fa-comment-dots';
+                    }
+
+                    let extraUI = '';
+                    if (modData['Altura_diseño'] !== undefined) {
+                        extraUI += `<li class="py-1"><b>Altura de Diseño:</b> <span class="text-primary fw-bold">${modData['Altura_diseño']} m</span></li>`;
+                    }
+                    if (modData['Validación Altura Diseño'] !== undefined) {
+                        extraUI += `<li class="py-1"><b>Validación:</b> <span>${modData['Validación Altura Diseño']}</span></li>`;
+                    }
+                    if (modData['Observacion'] !== undefined && modData['Observacion'] !== "") {
+                        extraUI += `<li class="py-1"><b>Observación:</b> <span class="fst-italic text-muted">"${modData['Observacion']}"</span></li>`;
+                    }
+
+                    let htmlValidacion = `
+                        <li class="timeline-item">
+                            <div class="timeline-icon ${iconClass}"><i class="fas ${iconHtml}"></i></div>
+                            <div class="timeline-content" style="border-left: 4px solid var(--color-primary); background-color: #f4fafe;">
+                                <div class="timeline-title">${accion} <span class="badge bg-secondary ms-2" style="font-size: 0.65rem;">PORTAL WEB</span></div>
+                                <div class="timeline-date">
+                                    <i class="far fa-clock me-1"></i> ${f} - ${h} 
+                                    <span class="ms-3"><i class="far fa-user-circle me-1 text-primary"></i> ${correoCoordinador}</span>
+                                </div>
+                                <div class="timeline-body mt-2">
+                                    <p class="mb-2 text-dark">${detalle}</p>
+                                    ${extraUI !== '' ? `<div class="bg-white p-2 rounded border shadow-sm"><ul class="mb-0 ps-3">${extraUI}</ul></div>` : ''}
+                                </div>
+                            </div>
+                        </li>
+                    `;
+                    arrayEventos.push({ timestamp: tsValidacion, html: htmlValidacion });
+                }
+
+                // Procesar el nodo estructurado
+                if (data['5_historial_web'] && typeof data['5_historial_web'] === 'object') {
+                    for (let modKey in data['5_historial_web']) {
+                        procesarEventoWeb(data['5_historial_web'][modKey]);
+                    }
+                }
+
+                // Procesar los nodos "sueltos" por el bug anterior (rescate de datos)
+                for (let key in data) {
+                    if (key.startsWith('5_historial_web.Modificacion_')) {
+                        procesarEventoWeb(data[key]);
+                    }
+                }
+
+                // 3) FALLBACK LEGACY (Si no hay historial nuevo, usa el antiguo)
+                if (!historialWebAgregado && (data.aprobacion_coordinador || data.altura_diseno !== undefined || data.observacion)) {
                     let fechaValidacion = "--/--/----";
                     let horaValidacion = "--:--:--";
                     let tsValidacion = Date.now(); 
@@ -890,26 +866,21 @@
                             </div>
                         </li>
                     `;
-                    
-                    // Empujar al array de eventos (con timestamp para el ordenamiento)
                     arrayEventos.push({ timestamp: tsValidacion, html: htmlValidacion });
                 }
 
-                // 3) ORDENAR CRONOLÓGICAMENTE Y CONSTRUIR HTML FINAL
+                // 4) ORDENAR CRONOLÓGICAMENTE Y CONSTRUIR HTML FINAL
                 if (arrayEventos.length > 0) {
                     
                     // Orden de más antiguo a más reciente
                     arrayEventos.sort((a, b) => a.timestamp - b.timestamp);
                     
                     arrayEventos.forEach(ev => {
-                        
-                        // Si ya tiene el HTML construido (Validación web), lo pegamos directo
                         if (ev.html) {
                             timeline.innerHTML += ev.html;
                             return;
                         }
 
-                        // Si es un evento de campo (Extracción, Zapata, etc.), construimos su tarjeta
                         let uiAttrs = obtenerAtributosUI(ev.llave);
                         let usuarioCampo = ev.datos['03_usuario_email'] || ev.datos['3_usuario_email'] || ev.datos['usuario_email'] || ev.datos['03_supervisor_email'] || 'Usuario de Campo';
                         
@@ -917,52 +888,18 @@
                         let galeriaHTML = '';
                         let hayFotos = false;
 
-                        // ==============================================================
-                        // NUEVA LÓGICA DE IMÁGENES: EXCLUSIVO STORAGE URL (IGNORAR BASE64)
-                        // ==============================================================
                         let imagenesProcesadas = {};
 
-                        // 1. TU LISTA MAESTRA DE ORDENAMIENTO DE VARIABLES
                         const ordenPersonalizado = [
-                            "5_distancia_norte_m",
-                            "6_distancia_sur_m",
-                            "7_distancia_este_m",
-                            "8_distancia_oeste_m",
-                            "9_altura_medida_terreno_m",
-                            "a10_inclinacion_norte_sur_deg",
-                            "a11_inclinacion_este_oeste_deg",
-                            "a12_torsion_deg",
-                            "a13_alerta_empotramiento",
-                            "a14_alerta_inclinacion_NS",
-                            "a15_alerta_inclinacion_EW",
-                            "a16_alerta_torsion",
-                            // Variables de Zapata
-                            "1_lado1_m",
-                            "2_lado2_m",
-                            "3_espesor_m",
-                            "4_volumen_total_m3",
-                            // Variables de Pilote de concreto
-                            "1_volumen_concreto_m3",
-                            // Variables de Revirado
-                            "1_torsion_anterior_grados",
-                            "2_torsion_posterior_grados",
-                            // Variables de Aplome
-                            "1_inclinacion_anterior_ns",
-                            "2_inclinacion_posterior_ns",
-                            "3_inclinacion_anterior_eo",
-                            "4_inclinacion_posterior_eo",
-                            // Variables de Mecanizado y galvanizado
-                            "5_altura_inicial_m",
-                            "6_altura_final_m",
-                            "7_cantidad_corte_m",
-                            "5_espesor_galvanizado_micras",
-                            // Orden Extraccion
-                            "7_resultado_extraccion",
-                            "8_detalle_extraccion",
-                            "9_observaciones_tecnicas",
-                            "5_observaciones",
-                            // Variables de hincado tras proceso de correccion 
-                            "a17_observaciones_geometria"
+                            "5_distancia_norte_m", "6_distancia_sur_m", "7_distancia_este_m", "8_distancia_oeste_m",
+                            "9_altura_medida_terreno_m", "a10_inclinacion_norte_sur_deg", "a11_inclinacion_este_oeste_deg",
+                            "a12_torsion_deg", "a13_alerta_empotramiento", "a14_alerta_inclinacion_NS", "a15_alerta_inclinacion_EW",
+                            "a16_alerta_torsion", "1_lado1_m", "2_lado2_m", "3_espesor_m", "4_volumen_total_m3",
+                            "1_volumen_concreto_m3", "1_torsion_anterior_grados", "2_torsion_posterior_grados",
+                            "1_inclinacion_anterior_ns", "2_inclinacion_posterior_ns", "3_inclinacion_anterior_eo",
+                            "4_inclinacion_posterior_eo", "5_altura_inicial_m", "6_altura_final_m", "7_cantidad_corte_m",
+                            "5_espesor_galvanizado_micras", "7_resultado_extraccion", "8_detalle_extraccion",
+                            "9_observaciones_tecnicas", "5_observaciones", "a17_observaciones_geometria"
                         ];
 
                         let llavesOrdenadas = Object.keys(ev.datos).sort((a, b) => {
@@ -976,12 +913,10 @@
                             return a.localeCompare(b);
                         });
 
-                        // 3. Iteramos ya con el orden perfecto
                         for (const k of llavesOrdenadas) {
                             const v = ev.datos[k];
                             
-                            // BLOQUE DE EVASIÓN Y BÚSQUEDA EXCLUSIVA DE URL DE STORAGE
-                            if (k.includes('base64')) continue; // IGNORAR BASE64 POR COMPLETO
+                            if (k.includes('base64')) continue; 
 
                             if (k.includes('url') && typeof v === 'string' && v.includes('firebasestorage')) {
                                 let nombreBase = k.replace('_url', '');
@@ -990,23 +925,15 @@
                                 continue; 
                             }
 
-                            // Ignorar metadatos de control y variables feas
-                            if (k.includes('fecha_registro') || 
-                                k.includes('hora_registro') || 
-                                k.includes('usuario_email') || 
-                                k.includes('rol_usuario') ||
-                                k.includes('intento_hincado_asociado') ||
-                                k.includes('repeticion_') ||
-                                k.includes('cerrada') || 
-                                k.includes('validacion_aplome') ||
-                                k.includes('validacion_revirado') ||
-                                k.includes('detalle_extraccion') ||
-                                k.includes('es_remediacion_final') ||
-                                k.includes('cerrado')) { 
+                            if (k.includes('fecha_registro') || k.includes('hora_registro') || 
+                                k.includes('usuario_email') || k.includes('rol_usuario') ||
+                                k.includes('intento_hincado_asociado') || k.includes('repeticion_') ||
+                                k.includes('cerrada') || k.includes('validacion_aplome') ||
+                                k.includes('validacion_revirado') || k.includes('detalle_extraccion') ||
+                                k.includes('es_remediacion_final') || k.includes('cerrado')) { 
                                 continue;
                             }
 
-                            // Formateo de variables y valores
                             let nombreLimpio = limpiarNombreVariable(k);
                             let valHtml = v;
 
@@ -1022,7 +949,6 @@
                         
                         detallesHTML += '</ul>';
 
-                        // Procesamos las imágenes con las URLs puras en alta calidad
                         for (const imgKey in imagenesProcesadas) {
                             let imgObj = imagenesProcesadas[imgKey];
                             let linkAltaCalidad = imgObj.url;
@@ -1037,7 +963,6 @@
                             detallesHTML += `<div class="mt-3 pt-3 border-top"><div class="text-muted small fw-bold mb-2">EVIDENCIAS FOTOGRÁFICAS (ALTA CALIDAD)</div><div class="d-flex gap-2 flex-wrap">${galeriaHTML}</div></div>`;
                         }
 
-                        // Construcción de la tarjeta individual
                         timeline.innerHTML += `
                             <li class="timeline-item">
                                 <div class="timeline-icon ${uiAttrs.color}"><i class="fas ${uiAttrs.icon}"></i></div>
@@ -1072,14 +997,12 @@
         // [INICIO: FUNCIÓN PARA CERRAR SESIÓN SEGURA]
         // ==========================================
         window.cerrarSesionCompleta = function() {
-            // 1. Matamos la memoria del usuario
             localStorage.removeItem('usuarioAlfatek');
             localStorage.removeItem('usuario_logueado_email');
             localStorage.removeItem('id_usuario_actual');
             localStorage.removeItem('proyecto_actual_web');
             sessionStorage.clear();
             
-            // 2. Lo mandamos al login
             window.location.href = 'login.html';
         };
         // ==========================================
