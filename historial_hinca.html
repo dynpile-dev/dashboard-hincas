@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="Historial de Hincas Alfatek" />
+    <meta name="description" content="Dashboard Alfatek Energy" />
     <meta name="author" content="Alfatek Energy" />
     <title>Historial de Hinca - Alfatek Energy</title>
     
@@ -771,8 +771,68 @@
                     buscarNodosRecursivo(data['3_datos_de_proceso'], "Datos_Proceso");
                 }
 
-                // 2) EXTRAER VALIDACIÓN WEB (APROBACIÓN DE COORDINADOR) COMO ÚLTIMO EVENTO SI EXISTE
-                if (data.aprobacion_coordinador || data.altura_diseno !== undefined || data.observacion) {
+                // 2) EXTRAER MODIFICACIONES WEB (NUEVO HISTORIAL) Y/O VALIDACIÓN LEGACY
+                if (data['5_historial_web']) {
+                    for (let modKey in data['5_historial_web']) {
+                        let modData = data['5_historial_web'][modKey];
+                        
+                        let f = modData.fecha || "--/--/----";
+                        let h = modData.hora || "--:--:--";
+                        let tsValidacion = parseFecha(f, h);
+                        if(tsValidacion === 0) tsValidacion = Date.now(); 
+                        
+                        let accion = modData.Accion || "Modificación Web";
+                        let detalle = modData.detalle || "";
+                        let correoCoordinador = modData.usuario || "Coordinador Web";
+                        
+                        let iconClass = 'icon-primary';
+                        let iconHtml = 'fa-desktop';
+                        
+                        let accionUpper = accion.toUpperCase();
+                        if (accionUpper.includes('APROBACI')) {
+                            iconClass = 'icon-success'; iconHtml = 'fa-check-double';
+                        } else if (accionUpper.includes('RECHAZO')) {
+                            iconClass = 'icon-danger'; iconHtml = 'fa-times-circle';
+                        } else if (accionUpper.includes('LIBERACI')) {
+                            iconClass = 'icon-warning'; iconHtml = 'fa-unlock';
+                        } else if (accionUpper.includes('ALTURA')) {
+                            iconClass = 'icon-info'; iconHtml = 'fa-ruler-vertical';
+                        } else if (accionUpper.includes('OBSERVACI')) {
+                            iconClass = 'icon-secondary'; iconHtml = 'fa-comment-dots';
+                        }
+
+                        let extraUI = '';
+                        if (modData['Altura_diseño'] !== undefined) {
+                            extraUI += `<li><b>Altura de Diseño:</b> <span class="text-primary fw-bold">${modData['Altura_diseño']} m</span></li>`;
+                        }
+                        if (modData['Validación Altura Diseño'] !== undefined) {
+                            extraUI += `<li><b>Validación:</b> <span>${modData['Validación Altura Diseño']}</span></li>`;
+                        }
+                        if (modData['Observacion'] !== undefined) {
+                            extraUI += `<li><b>Observación:</b> <span class="fst-italic text-muted">"${modData['Observacion']}"</span></li>`;
+                        }
+
+                        let htmlValidacion = `
+                            <li class="timeline-item">
+                                <div class="timeline-icon ${iconClass}"><i class="fas ${iconHtml}"></i></div>
+                                <div class="timeline-content" style="border-left: 4px solid var(--color-primary); background-color: #f4fafe;">
+                                    <div class="timeline-title">${accion} <span class="badge bg-secondary ms-2" style="font-size: 0.65rem;">PORTAL WEB</span></div>
+                                    <div class="timeline-date">
+                                        <i class="far fa-clock me-1"></i> ${f} - ${h} 
+                                        <span class="ms-3"><i class="far fa-user-circle me-1 text-primary"></i> ${correoCoordinador}</span>
+                                    </div>
+                                    <div class="timeline-body mt-2">
+                                        <p class="mb-2 text-dark">${detalle}</p>
+                                        ${extraUI !== '' ? `<div class="bg-white p-2 rounded border shadow-sm"><ul class="mb-0 ps-3">${extraUI}</ul></div>` : ''}
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                        arrayEventos.push({ timestamp: tsValidacion, html: htmlValidacion });
+                    }
+                } 
+                // MANTENEMOS EL CÓDIGO ORIGINAL COMO FALLBACK PARA HINCAS ANTIGUAS SIN EL NODO 5_historial_web
+                else if (data.aprobacion_coordinador || data.altura_diseno !== undefined || data.observacion) {
                     
                     let fechaValidacion = "--/--/----";
                     let horaValidacion = "--:--:--";
