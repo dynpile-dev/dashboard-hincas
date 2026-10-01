@@ -524,7 +524,49 @@
         aplicarPermisosMatriz();
 
         // ============================================================================
-        // CARGA DE TOLERANCIAS DINÁMICAS DESDE FIREBASE (EL CEREBRO WEB ESCALABLE)
+        // [NUEVA FUNCIÓN ROBUSTA] MOTOR DE AUDITORÍA (HISTORIAL DE WEB)
+        // ============================================================================
+        async function registrarCambioYGuardarHistorial(idDocumentoHinca, accion, detalleCambio, camposAActualizar, crearNuevo = false) {
+            try {
+                const hincaRef = doc(db, "ControlHincas", idDocumentoHinca);
+                const now = new Date();
+                const timestampMs = now.getTime();
+                
+                // Formateo de fecha y hora local de Perú para que quede limpio en el registro
+                const fecha = now.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const hora = now.toLocaleTimeString('es-PE', { hour12: false });
+                
+                const usuarioWeb = localStorage.getItem('usuario_logueado_email') || 'Usuario Desconocido';
+
+                let datosDeActualizacion = {
+                    ...camposAActualizar,
+                    "ultima_actualizacion_web": now.toISOString(),
+                    "usuario_web_actualizacion": usuarioWeb
+                };
+
+                const rutaHistorial = `5_historial_web.mod_${timestampMs}`;
+                datosDeActualizacion[rutaHistorial] = {
+                    fecha: fecha,
+                    hora: hora,
+                    usuario: usuarioWeb,
+                    accion: accion,
+                    detalle: detalleCambio
+                };
+
+                if (crearNuevo) {
+                    await setDoc(hincaRef, datosDeActualizacion, { merge: true });
+                } else {
+                    await updateDoc(hincaRef, datosDeActualizacion);
+                }
+                console.log("Cambio auditado en historial:", accion);
+            } catch (error) {
+                console.error("Error crítico al guardar el historial de auditoría: ", error);
+                throw error; // Propagar error para que la UI lo maneje
+            }
+        }
+
+        // ============================================================================
+        // CARGA DE TOLERANCIAS DINÁMICAS DESDE FIREBASE
         // ============================================================================
         let toleranciasGlobales = {};
         
@@ -543,7 +585,6 @@
             }
         }
         
-        // Disparamos la descarga al inicio
         descargarTolerancias();
 
         // ============================================================================
@@ -959,9 +1000,12 @@
                     
                     const promesas = [];
                     snap.forEach(docSnap => {
-                        promesas.push(updateDoc(doc(db, "ControlHincas", docSnap.id), {
-                            enviado_a_reportes: true
-                        }));
+                        promesas.push(registrarCambioYGuardarHistorial(
+                            docSnap.id,
+                            "Cierre de Tracker",
+                            `Se envió la hinca para el consolidado de reportes (Tracker completo).`,
+                            { enviado_a_reportes: true }
+                        ));
                     });
                     
                     await Promise.all(promesas);
@@ -1184,6 +1228,10 @@
                 });
             }
 
+            // =========================================================================
+            // EVENT LISTENERS DE GUARDADO Y AUDITORÍA
+            // =========================================================================
+
             document.getElementById('btnGuardarAltura').addEventListener('click', async () => {
                 const inpAltura = document.getElementById('inpAlturaDiseno');
                 const btnGuardar = document.getElementById('btnGuardarAltura');
@@ -1217,32 +1265,39 @@
                     elTolerancia.textContent = resultadoValidacionEnVivo.texto;
                     elTolerancia.className = 'info-movil-value ' + resultadoValidacionEnVivo.clase;
 
-                    let payloadData = {
-                        "altura_diseno": valor.toFixed(2),
-                        "ultima_actualizacion_web": new Date().toISOString(),
-                        "usuario_web_actualizacion": userWeb
-                    };
-
+                    // Usamos nuestra nueva función de auditoría
                     if (docSnap.exists()) {
-                        await updateDoc(docRef, payloadData);
+                        const altAnterior = docSnap.data().altura_diseno || "Ninguna";
+                        await registrarCambioYGuardarHistorial(
+                            hincaActual.idDoc,
+                            "Modificación Altura Diseño",
+                            `Altura cambió de ${altAnterior}m a ${valor.toFixed(2)}m`,
+                            { "altura_diseno": valor.toFixed(2) }
+                        );
                     } else {
-                        // MODO ESQUELETO
-                        payloadData["1_datos_previos"] = {
-                            "1_proyecto": proyectoActual,
-                            "2_cuadrilla": "Sin registrar",
-                            "3_seccion": hincaActual.seccion.toString(),
-                            "4_subcampo": hincaActual.sc.toString(),
-                            "5_numero_tracker": hincaActual.tracker.toString(),
-                            "6_numero_hinca": hincaActual.hincaRow,
-                            "7_tipo_de_hinca": tipoHincaExtraido
-                        };
-                        await setDoc(docRef, payloadData, { merge: true });
+                        // Creación del Esqueleto (Rara vez pasa, pero por si acaso)
+                        await registrarCambioYGuardarHistorial(
+                            hincaActual.idDoc,
+                            "Asignación Altura Diseño (Nueva)",
+                            `Se asignó altura inicial de ${valor.toFixed(2)}m a hinca vacía.`,
+                            {
+                                "altura_diseno": valor.toFixed(2),
+                                "1_datos_previos.1_proyecto": proyectoActual,
+                                "1_datos_previos.2_cuadrilla": "Sin registrar",
+                                "1_datos_previos.3_seccion": hincaActual.seccion.toString(),
+                                "1_datos_previos.4_subcampo": hincaActual.sc.toString(),
+                                "1_datos_previos.5_numero_tracker": hincaActual.tracker.toString(),
+                                "1_datos_previos.6_numero_hinca": hincaActual.hincaRow,
+                                "1_datos_previos.7_tipo_de_hinca": tipoHincaExtraido
+                            },
+                            true // FLAG para crear documento nuevo (setDoc)
+                        );
                     }
 
                     inpAltura.disabled = true;
                     btnGuardar.classList.add('d-none');
                     btnEditar.classList.remove('d-none');
-                    mostrarAlertaSuave("Altura de diseño guardada. Evalúe y Apruebe manualmente cuando corresponda.", "success");
+                    mostrarAlertaSuave("Altura de diseño guardada y auditada.", "success");
 
                     if(datosSubcampoActual) {
                         const totalTrackers = (parseInt(datosSubcampoActual.trackers.sec1)||0) + (parseInt(datosSubcampoActual.trackers.sec2)||0) + (parseInt(datosSubcampoActual.trackers.sec3)||0) + (parseInt(datosSubcampoActual.trackers.sec4)||0);
@@ -1250,7 +1305,6 @@
                     }
                     
                 } catch (error) {
-                    console.error("Error al guardar altura:", error);
                     mostrarAlertaSuave("Error al guardar en la base de datos.", "danger");
                 } finally {
                     btnGuardar.disabled = false;
@@ -1274,53 +1328,47 @@
                 btnObs.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
                 try {
-                    await setDoc(doc(db, "ControlHincas", hincaActual.idDoc), {
-                        observacion: observacion,
-                        "1_datos_previos": {
-                            "4_subcampo": hincaActual.sc.toString(),
-                            "3_seccion": hincaActual.seccion.toString(),
-                            "5_numero_tracker": hincaActual.tracker.toString(),
-                            "6_numero_hinca": hincaActual.hincaRow,
-                            "1_proyecto": proyectoActual
-                        },
-                        ultima_actualizacion_web: new Date().toISOString(),
-                        usuario_web_actualizacion: userWeb
-                    }, { merge: true });
+                    await registrarCambioYGuardarHistorial(
+                        hincaActual.idDoc,
+                        "Actualización de Observación",
+                        `Observación del Coordinador guardada.`,
+                        {
+                            "observacion": observacion,
+                            "1_datos_previos.4_subcampo": hincaActual.sc.toString(),
+                            "1_datos_previos.3_seccion": hincaActual.seccion.toString(),
+                            "1_datos_previos.5_numero_tracker": hincaActual.tracker.toString(),
+                            "1_datos_previos.6_numero_hinca": hincaActual.hincaRow,
+                            "1_datos_previos.1_proyecto": proyectoActual
+                        }
+                    );
                     
                     btnObs.classList.replace('btn-outline-primary', 'btn-success');
                     btnObs.innerHTML = '<i class="fas fa-check me-1"></i> Guardado';
-                    mostrarAlertaSuave("Observación guardada.", "success");
+                    mostrarAlertaSuave("Observación guardada y auditada.", "success");
+                    
                     setTimeout(() => {
                         btnObs.classList.replace('btn-success', 'btn-outline-primary');
                         btnObs.innerHTML = '<i class="fas fa-save me-1"></i> Guardar Comentario';
                         btnObs.disabled = false;
                     }, 2000);
                 } catch (error) {
-                    console.error("Error al guardar observación:", error);
                     mostrarAlertaSuave("Error guardando el comentario.", "danger");
                     btnObs.disabled = false;
                     btnObs.innerHTML = '<i class="fas fa-save me-1"></i> Guardar Comentario';
                 }
             });
 
-            // =========================================================================
-            // LÓGICA DE APROBACIÓN: VALIDAR SI HAY ALTURA DE DISEÑO GUARDADA
-            // =========================================================================
             document.getElementById('btnAprobarHinca').addEventListener('click', async () => {
                 if (!hincaActual.idDoc) return;
                 
                 const inpAltura = document.getElementById('inpAlturaDiseno');
                 const btnGuardar = document.getElementById('btnGuardarAltura');
 
-                // Si el campo está vacío o el botón Guardar está visible (no guardó el cambio)
                 if (!inpAltura.value || !btnGuardar.classList.contains('d-none')) {
-                    mostrarAlertaSuave("Atención: Debe ingresar y GUARDAR la Altura de Diseño antes de aprobar la hinca.", "warning");
+                    mostrarAlertaSuave("Atención: Debe ingresar y GUARDAR la Altura de Diseño antes de aprobar.", "warning");
                     inpAltura.style.borderColor = "#ffc107";
                     inpAltura.style.boxShadow = "0 0 0 0.25rem rgba(255, 193, 7, 0.25)";
-                    setTimeout(() => {
-                        inpAltura.style.borderColor = "";
-                        inpAltura.style.boxShadow = "";
-                    }, 2500);
+                    setTimeout(() => { inpAltura.style.borderColor = ""; inpAltura.style.boxShadow = ""; }, 2500);
                     return;
                 }
 
@@ -1332,12 +1380,15 @@
                     btnAprobar.disabled = true;
 
                     try {
-                        await updateDoc(doc(db, "ControlHincas", hincaActual.idDoc), {
-                            aprobacion_coordinador: "APROBADO",
-                            "2_auditoria.6_estado_final_de_calidad": "APROBADO",
-                            ultima_actualizacion_web: new Date().toISOString(),
-                            usuario_web_actualizacion: userWeb
-                        });
+                        await registrarCambioYGuardarHistorial(
+                            hincaActual.idDoc,
+                            "Aprobación de Calidad",
+                            `La hinca fue revisada y Aprobada por el coordinador.`,
+                            {
+                                "aprobacion_coordinador": "APROBADO",
+                                "2_auditoria.6_estado_final_de_calidad": "APROBADO"
+                            }
+                        );
                         
                         btnAprobar.className = 'btn btn-panel-action btn-success text-white';
                         btnAprobar.innerHTML = '<i class="fas fa-check-circle me-1"></i> Aprobado';
@@ -1364,14 +1415,13 @@
                         document.getElementById('inpObservacion').disabled = true;
                         document.getElementById('btnGuardarObservacion').disabled = true;
                         
-                        mostrarAlertaSuave("Hinca aprobada exitosamente y bloqueada para cambios.", "success");
+                        mostrarAlertaSuave("Hinca aprobada exitosamente y auditada.", "success");
 
                         if(datosSubcampoActual) {
                             const totalTrackers = (parseInt(datosSubcampoActual.trackers.sec1)||0) + (parseInt(datosSubcampoActual.trackers.sec2)||0) + (parseInt(datosSubcampoActual.trackers.sec3)||0) + (parseInt(datosSubcampoActual.trackers.sec4)||0);
                             cargarDatosControlHincas(datosSubcampoActual.id_subcampo, totalTrackers * 17);
                         }
                     } catch(e) {
-                        console.error(e);
                         btnAprobar.disabled = false;
                         mostrarAlertaSuave("Error de conexión al aprobar la hinca.", "danger");
                     }
@@ -1389,12 +1439,15 @@
                     btnRechazar.disabled = true;
 
                     try {
-                        await updateDoc(doc(db, "ControlHincas", hincaActual.idDoc), {
-                            aprobacion_coordinador: "RECHAZADO",
-                            "2_auditoria.6_estado_final_de_calidad": "RECHAZADO",
-                            ultima_actualizacion_web: new Date().toISOString(),
-                            usuario_web_actualizacion: userWeb
-                        });
+                        await registrarCambioYGuardarHistorial(
+                            hincaActual.idDoc,
+                            "Rechazo de Calidad",
+                            `La hinca fue Rechazada y marcada como crítica por el coordinador.`,
+                            {
+                                "aprobacion_coordinador": "RECHAZADO",
+                                "2_auditoria.6_estado_final_de_calidad": "RECHAZADO"
+                            }
+                        );
                         
                         btnRechazar.className = 'btn btn-panel-action btn-danger text-white';
                         btnRechazar.innerHTML = '<i class="fas fa-times-circle me-1"></i> Rechazado';
@@ -1421,14 +1474,13 @@
                         document.getElementById('inpObservacion').disabled = true;
                         document.getElementById('btnGuardarObservacion').disabled = true;
 
-                        mostrarAlertaSuave("La hinca ha sido rechazada.", "danger");
+                        mostrarAlertaSuave("La hinca ha sido rechazada y el evento fue auditado.", "danger");
 
                         if(datosSubcampoActual) {
                             const totalTrackers = (parseInt(datosSubcampoActual.trackers.sec1)||0) + (parseInt(datosSubcampoActual.trackers.sec2)||0) + (parseInt(datosSubcampoActual.trackers.sec3)||0) + (parseInt(datosSubcampoActual.trackers.sec4)||0);
                             cargarDatosControlHincas(datosSubcampoActual.id_subcampo, totalTrackers * 17);
                         }
                     } catch(e) {
-                        console.error(e);
                         btnRechazar.disabled = false;
                         mostrarAlertaSuave("Error de conexión al rechazar la hinca.", "danger");
                     }
@@ -1452,15 +1504,16 @@
                 btnLiberar.disabled = true;
 
                 try {
-                    let estadoRestaurado = "PENDIENTE";
-                    
-                    await updateDoc(doc(db, "ControlHincas", hincaActual.idDoc), {
-                        "4_estado_final.hinca_clausurada": false, 
-                        aprobacion_coordinador: "PENDIENTE",
-                        "2_auditoria.6_estado_final_de_calidad": estadoRestaurado,
-                        ultima_actualizacion_web: new Date().toISOString(),
-                        usuario_web_actualizacion: userWeb
-                    });
+                    await registrarCambioYGuardarHistorial(
+                        hincaActual.idDoc,
+                        "Liberación Web (Desbloqueo)",
+                        `Se liberó la hinca para permitir modificaciones adicionales.`,
+                        {
+                            "4_estado_final.hinca_clausurada": false, 
+                            "aprobacion_coordinador": "PENDIENTE",
+                            "2_auditoria.6_estado_final_de_calidad": "PENDIENTE"
+                        }
+                    );
 
                     const contenedorBadges = document.getElementById('contenedorBadges');
                     let htmlActual = contenedorBadges.innerHTML;
@@ -1495,7 +1548,6 @@
                         cargarDatosControlHincas(datosSubcampoActual.id_subcampo, totalTrackers * 17);
                     }
                 } catch(e) {
-                    console.error("Error al liberar la hinca:", e);
                     btnLiberar.disabled = false;
                     mostrarAlertaSuave("Error de conexión al intentar liberar la hinca.", "danger");
                 } finally {
