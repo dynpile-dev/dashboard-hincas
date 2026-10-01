@@ -524,19 +524,24 @@
         aplicarPermisosMatriz();
 
         // ============================================================================
-        // [NUEVA FUNCIÓN ROBUSTA] MOTOR DE AUDITORÍA (HISTORIAL DE WEB)
+        // [NUEVA FUNCIÓN ROBUSTA] MOTOR DE AUDITORÍA (HISTORIAL DE WEB 2.0)
         // ============================================================================
-        async function registrarCambioYGuardarHistorial(idDocumentoHinca, accion, detalleCambio, camposAActualizar, crearNuevo = false) {
+        async function registrarCambioYGuardarHistorial(idDocumentoHinca, accion, detalleCambio, camposAActualizar, extraHistorialData = {}, crearNuevo = false) {
             try {
                 const hincaRef = doc(db, "ControlHincas", idDocumentoHinca);
                 const now = new Date();
-                const timestampMs = now.getTime();
                 
-                // Formateo de fecha y hora local de Perú para que quede limpio en el registro
                 const fecha = now.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 const hora = now.toLocaleTimeString('es-PE', { hour12: false });
-                
                 const usuarioWeb = localStorage.getItem('usuario_logueado_email') || 'Usuario Desconocido';
+
+                let nextModNumber = 1;
+                if (!crearNuevo) {
+                    const snap = await getDoc(hincaRef);
+                    if (snap.exists() && snap.data()['5_historial_web']) {
+                        nextModNumber = Object.keys(snap.data()['5_historial_web']).length + 1;
+                    }
+                }
 
                 let datosDeActualizacion = {
                     ...camposAActualizar,
@@ -544,13 +549,15 @@
                     "usuario_web_actualizacion": usuarioWeb
                 };
 
-                const rutaHistorial = `5_historial_web.mod_${timestampMs}`;
+                const rutaHistorial = `5_historial_web.Modificacion_${nextModNumber}`;
+                
                 datosDeActualizacion[rutaHistorial] = {
+                    Accion: accion,
+                    detalle: detalleCambio,
+                    ...extraHistorialData,
                     fecha: fecha,
                     hora: hora,
-                    usuario: usuarioWeb,
-                    accion: accion,
-                    detalle: detalleCambio
+                    usuario: usuarioWeb
                 };
 
                 if (crearNuevo) {
@@ -558,10 +565,10 @@
                 } else {
                     await updateDoc(hincaRef, datosDeActualizacion);
                 }
-                console.log("Cambio auditado en historial:", accion);
+                console.log(`Cambio auditado en historial: Modificacion_${nextModNumber}`);
             } catch (error) {
                 console.error("Error crítico al guardar el historial de auditoría: ", error);
-                throw error; // Propagar error para que la UI lo maneje
+                throw error;
             }
         }
 
@@ -1004,7 +1011,8 @@
                             docSnap.id,
                             "Cierre de Tracker",
                             `Se envió la hinca para el consolidado de reportes (Tracker completo).`,
-                            { enviado_a_reportes: true }
+                            { enviado_a_reportes: true },
+                            {}
                         ));
                     });
                     
@@ -1220,6 +1228,9 @@
                         inputs.forEach(inp => { inp.value = ''; inp.readOnly = true; });
                         inpAltura.disabled = false;
                         btnGuardar.classList.remove('d-none');
+                        // BLOQUEO ANTIFANTASMAS: Si no existe documento base, no se puede aprobar ni rechazar
+                        btnAprobar.disabled = true;
+                        btnRechazar.disabled = true;
                     }
                 }).catch(err => {
                     console.error("Error cargando detalle:", err);
@@ -1265,17 +1276,23 @@
                     elTolerancia.textContent = resultadoValidacionEnVivo.texto;
                     elTolerancia.className = 'info-movil-value ' + resultadoValidacionEnVivo.clase;
 
-                    // Usamos nuestra nueva función de auditoría
+                    // NUEVA LÓGICA DE AUDITORÍA (HISTORIAL MODIFICACION_N)
+                    let extraDataHistorial = {
+                        "Altura_diseño": valor.toFixed(2),
+                        "Validación Altura Diseño": resultadoValidacionEnVivo.texto
+                    };
+
                     if (docSnap.exists()) {
                         const altAnterior = docSnap.data().altura_diseno || "Ninguna";
                         await registrarCambioYGuardarHistorial(
                             hincaActual.idDoc,
                             "Modificación Altura Diseño",
-                            `Altura cambió de ${altAnterior}m a ${valor.toFixed(2)}m`,
-                            { "altura_diseno": valor.toFixed(2) }
+                            `Se cambió la altura de diseño de ${altAnterior}m a ${valor.toFixed(2)}m`,
+                            { "altura_diseno": valor.toFixed(2) },
+                            extraDataHistorial
                         );
                     } else {
-                        // Creación del Esqueleto (Rara vez pasa, pero por si acaso)
+                        // MODO ESQUELETO
                         await registrarCambioYGuardarHistorial(
                             hincaActual.idDoc,
                             "Asignación Altura Diseño (Nueva)",
@@ -1290,7 +1307,8 @@
                                 "1_datos_previos.6_numero_hinca": hincaActual.hincaRow,
                                 "1_datos_previos.7_tipo_de_hinca": tipoHincaExtraido
                             },
-                            true // FLAG para crear documento nuevo (setDoc)
+                            extraDataHistorial,
+                            true
                         );
                     }
 
@@ -1331,7 +1349,7 @@
                     await registrarCambioYGuardarHistorial(
                         hincaActual.idDoc,
                         "Actualización de Observación",
-                        `Observación del Coordinador guardada.`,
+                        "Observación del Coordinador guardada.",
                         {
                             "observacion": observacion,
                             "1_datos_previos.4_subcampo": hincaActual.sc.toString(),
@@ -1339,7 +1357,8 @@
                             "1_datos_previos.5_numero_tracker": hincaActual.tracker.toString(),
                             "1_datos_previos.6_numero_hinca": hincaActual.hincaRow,
                             "1_datos_previos.1_proyecto": proyectoActual
-                        }
+                        },
+                        { "Observacion": observacion }
                     );
                     
                     btnObs.classList.replace('btn-outline-primary', 'btn-success');
@@ -1361,9 +1380,16 @@
             document.getElementById('btnAprobarHinca').addEventListener('click', async () => {
                 if (!hincaActual.idDoc) return;
                 
+                const tipoHincaValidacion = document.getElementById('txtTipoHinca').textContent;
+                if (tipoHincaValidacion === '— Sin registrar —') {
+                    mostrarAlertaSuave("No puede aprobar una hinca que no tiene registros operativos del móvil.", "danger");
+                    return;
+                }
+
                 const inpAltura = document.getElementById('inpAlturaDiseno');
                 const btnGuardar = document.getElementById('btnGuardarAltura');
 
+                // Si el campo está vacío o el botón Guardar está visible (no guardó el cambio)
                 if (!inpAltura.value || !btnGuardar.classList.contains('d-none')) {
                     mostrarAlertaSuave("Atención: Debe ingresar y GUARDAR la Altura de Diseño antes de aprobar.", "warning");
                     inpAltura.style.borderColor = "#ffc107";
@@ -1383,7 +1409,7 @@
                         await registrarCambioYGuardarHistorial(
                             hincaActual.idDoc,
                             "Aprobación de Calidad",
-                            `La hinca fue revisada y Aprobada por el coordinador.`,
+                            "La hinca fue revisada y Aprobada por el coordinador.",
                             {
                                 "aprobacion_coordinador": "APROBADO",
                                 "2_auditoria.6_estado_final_de_calidad": "APROBADO"
@@ -1431,6 +1457,12 @@
             document.getElementById('btnRechazarHinca').addEventListener('click', async () => {
                 if (!hincaActual.idDoc) return;
                 
+                const tipoHincaValidacion = document.getElementById('txtTipoHinca').textContent;
+                if (tipoHincaValidacion === '— Sin registrar —') {
+                    mostrarAlertaSuave("No puede rechazar una hinca que no tiene registros operativos del móvil.", "danger");
+                    return;
+                }
+
                 pedirConfirmacion("¿Rechazar esta hinca? Esto la marcará en rojo y la bloqueará temporalmente para revisión.", async () => {
                     const btnAprobar = document.getElementById('btnAprobarHinca');
                     const btnRechazar = document.getElementById('btnRechazarHinca');
@@ -1442,7 +1474,7 @@
                         await registrarCambioYGuardarHistorial(
                             hincaActual.idDoc,
                             "Rechazo de Calidad",
-                            `La hinca fue Rechazada y marcada como crítica por el coordinador.`,
+                            "La hinca fue Rechazada y marcada como crítica por el coordinador.",
                             {
                                 "aprobacion_coordinador": "RECHAZADO",
                                 "2_auditoria.6_estado_final_de_calidad": "RECHAZADO"
@@ -1507,7 +1539,7 @@
                     await registrarCambioYGuardarHistorial(
                         hincaActual.idDoc,
                         "Liberación Web (Desbloqueo)",
-                        `Se liberó la hinca para permitir modificaciones adicionales.`,
+                        "Se liberó la hinca para permitir modificaciones adicionales.",
                         {
                             "4_estado_final.hinca_clausurada": false, 
                             "aprobacion_coordinador": "PENDIENTE",
