@@ -525,6 +525,7 @@
 
         // ============================================================================
         // [NUEVA FUNCIÓN ROBUSTA] MOTOR DE AUDITORÍA (HISTORIAL DE WEB 2.0)
+        // Solucionado definitivamente el problema de campos sueltos con puntos en Firebase
         // ============================================================================
         async function registrarCambioYGuardarHistorial(idDocumentoHinca, accion, detalleCambio, camposAActualizar, extraHistorialData = {}, crearNuevo = false) {
             try {
@@ -537,14 +538,27 @@
 
                 let nextModNumber = 1;
                 
-                if (!crearNuevo) {
-                    const snap = await getDoc(hincaRef);
-                    if (snap.exists() && snap.data()['5_historial_web']) {
-                        nextModNumber = Object.keys(snap.data()['5_historial_web']).length + 1;
+                const snap = await getDoc(hincaRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    let count = 0;
+                    if (data['5_historial_web']) count += Object.keys(data['5_historial_web']).length;
+                    // Escaneo para contar las variables sueltas por si hubo error anterior
+                    for (let key in data) {
+                        if (key.startsWith('5_historial_web.Modificacion_')) count++;
                     }
+                    nextModNumber = count + 1;
                 }
 
-                const historialEntry = {
+                let datosDeActualizacion = {
+                    ...camposAActualizar,
+                    "ultima_actualizacion_web": now.toISOString(),
+                    "usuario_web_actualizacion": usuarioWeb
+                };
+
+                const rutaHistorial = `5_historial_web.Modificacion_${nextModNumber}`;
+                
+                datosDeActualizacion[rutaHistorial] = {
                     Accion: accion,
                     detalle: detalleCambio,
                     ...extraHistorialData,
@@ -553,31 +567,20 @@
                     usuario: usuarioWeb
                 };
 
-                if (crearNuevo) {
-                    // SOLUCIÓN: Usamos un objeto JSON anidado real (sin puntos en las keys) para setDoc
-                    let payloadData = {
-                        ...camposAActualizar,
-                        "ultima_actualizacion_web": now.toISOString(),
-                        "usuario_web_actualizacion": usuarioWeb,
-                        "5_historial_web": {}
-                    };
-                    
-                    payloadData["5_historial_web"][`Modificacion_${nextModNumber}`] = historialEntry;
-
-                    await setDoc(hincaRef, payloadData, { merge: true });
-                } else {
-                    // Para updateDoc, mantenemos la notación de puntos
-                    let datosDeActualizacion = {
-                        ...camposAActualizar,
-                        "ultima_actualizacion_web": now.toISOString(),
-                        "usuario_web_actualizacion": usuarioWeb
-                    };
-
-                    const rutaHistorial = `5_historial_web.Modificacion_${nextModNumber}`;
-                    datosDeActualizacion[rutaHistorial] = historialEntry;
-
-                    await updateDoc(hincaRef, datosDeActualizacion);
+                // CONVERTIDOR INTELIGENTE: Pasa de "1_datos_previos.1_proyecto" a un objeto real anidado
+                let payloadExpandido = {};
+                for (let key in datosDeActualizacion) {
+                    let partes = key.split('.');
+                    let actual = payloadExpandido;
+                    for (let i = 0; i < partes.length - 1; i++) {
+                        if (!actual[partes[i]]) actual[partes[i]] = {};
+                        actual = actual[partes[i]];
+                    }
+                    actual[partes[partes.length - 1]] = datosDeActualizacion[key];
                 }
+
+                // Un solo setDoc con merge: true crea carpetas perfectas sin importar si es nuevo o update
+                await setDoc(hincaRef, payloadExpandido, { merge: true });
                 console.log(`Cambio auditado en historial: Modificacion_${nextModNumber}`);
             } catch (error) {
                 console.error("Error crítico al guardar el historial de auditoría: ", error);
@@ -1305,15 +1308,13 @@
                         // MODO ESQUELETO
                         let payloadBase = {
                             "altura_diseno": valor.toFixed(2),
-                            "1_datos_previos": {
-                                "1_proyecto": proyectoActual,
-                                "2_cuadrilla": "Sin registrar",
-                                "3_seccion": hincaActual.seccion.toString(),
-                                "4_subcampo": hincaActual.sc.toString(),
-                                "5_numero_tracker": hincaActual.tracker.toString(),
-                                "6_numero_hinca": hincaActual.hincaRow,
-                                "7_tipo_de_hinca": tipoHincaExtraido
-                            }
+                            "1_datos_previos.1_proyecto": proyectoActual,
+                            "1_datos_previos.2_cuadrilla": "Sin registrar",
+                            "1_datos_previos.3_seccion": hincaActual.seccion.toString(),
+                            "1_datos_previos.4_subcampo": hincaActual.sc.toString(),
+                            "1_datos_previos.5_numero_tracker": hincaActual.tracker.toString(),
+                            "1_datos_previos.6_numero_hinca": hincaActual.hincaRow,
+                            "1_datos_previos.7_tipo_de_hinca": tipoHincaExtraido
                         };
                         
                         await registrarCambioYGuardarHistorial(
@@ -1367,16 +1368,13 @@
 
                     // Si no existe, creamos la estructura base para no generar "variables sueltas"
                     if (!docSnap.exists()) {
-                        let estructuraDatosPrevios = {
-                            "1_proyecto": proyectoActual,
-                            "2_cuadrilla": "Sin registrar",
-                            "3_seccion": hincaActual.seccion.toString(),
-                            "4_subcampo": hincaActual.sc.toString(),
-                            "5_numero_tracker": hincaActual.tracker.toString(),
-                            "6_numero_hinca": hincaActual.hincaRow,
-                            "7_tipo_de_hinca": document.getElementById('txtTipoHinca').textContent
-                        };
-                        camposAActualizar["1_datos_previos"] = estructuraDatosPrevios;
+                        camposAActualizar["1_datos_previos.1_proyecto"] = proyectoActual;
+                        camposAActualizar["1_datos_previos.2_cuadrilla"] = "Sin registrar";
+                        camposAActualizar["1_datos_previos.3_seccion"] = hincaActual.seccion.toString();
+                        camposAActualizar["1_datos_previos.4_subcampo"] = hincaActual.sc.toString();
+                        camposAActualizar["1_datos_previos.5_numero_tracker"] = hincaActual.tracker.toString();
+                        camposAActualizar["1_datos_previos.6_numero_hinca"] = hincaActual.hincaRow;
+                        camposAActualizar["1_datos_previos.7_tipo_de_hinca"] = document.getElementById('txtTipoHinca').textContent;
                     }
 
                     await registrarCambioYGuardarHistorial(
