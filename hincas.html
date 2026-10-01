@@ -525,7 +525,6 @@
 
         // ============================================================================
         // [NUEVA FUNCIÓN ROBUSTA] MOTOR DE AUDITORÍA (HISTORIAL DE WEB 2.0)
-        // Corregido el problema de la estructura desorganizada en la creación.
         // ============================================================================
         async function registrarCambioYGuardarHistorial(idDocumentoHinca, accion, detalleCambio, camposAActualizar, extraHistorialData = {}, crearNuevo = false) {
             try {
@@ -545,15 +544,7 @@
                     }
                 }
 
-                let datosDeActualizacion = {
-                    ...camposAActualizar,
-                    "ultima_actualizacion_web": now.toISOString(),
-                    "usuario_web_actualizacion": usuarioWeb
-                };
-
-                const rutaHistorial = `5_historial_web.Modificacion_${nextModNumber}`;
-                
-                datosDeActualizacion[rutaHistorial] = {
+                const historialEntry = {
                     Accion: accion,
                     detalle: detalleCambio,
                     ...extraHistorialData,
@@ -563,32 +554,28 @@
                 };
 
                 if (crearNuevo) {
-                    // CÓDIGO CORREGIDO PARA EVITAR VARIABLES SUELTAS Y REPETICIONES
+                    // SOLUCIÓN: Usamos un objeto JSON anidado real (sin puntos en las keys) para setDoc
                     let payloadData = {
-                        "1_datos_previos": {
-                            "1_proyecto": camposAActualizar["1_datos_previos"]["1_proyecto"],
-                            "2_cuadrilla": camposAActualizar["1_datos_previos"]["2_cuadrilla"],
-                            "3_seccion": camposAActualizar["1_datos_previos"]["3_seccion"],
-                            "4_subcampo": camposAActualizar["1_datos_previos"]["4_subcampo"],
-                            "5_numero_tracker": camposAActualizar["1_datos_previos"]["5_numero_tracker"],
-                            "6_numero_hinca": camposAActualizar["1_datos_previos"]["6_numero_hinca"],
-                            "7_tipo_de_hinca": camposAActualizar["1_datos_previos"]["7_tipo_de_hinca"]
-                        },
+                        ...camposAActualizar,
+                        "ultima_actualizacion_web": now.toISOString(),
+                        "usuario_web_actualizacion": usuarioWeb,
+                        "5_historial_web": {}
+                    };
+                    
+                    payloadData["5_historial_web"][`Modificacion_${nextModNumber}`] = historialEntry;
+
+                    await setDoc(hincaRef, payloadData, { merge: true });
+                } else {
+                    // Para updateDoc, mantenemos la notación de puntos
+                    let datosDeActualizacion = {
+                        ...camposAActualizar,
                         "ultima_actualizacion_web": now.toISOString(),
                         "usuario_web_actualizacion": usuarioWeb
                     };
 
-                    if (camposAActualizar.altura_diseno) {
-                        payloadData.altura_diseno = camposAActualizar.altura_diseno;
-                    }
-                    if (camposAActualizar.observacion) {
-                        payloadData.observacion = camposAActualizar.observacion;
-                    }
+                    const rutaHistorial = `5_historial_web.Modificacion_${nextModNumber}`;
+                    datosDeActualizacion[rutaHistorial] = historialEntry;
 
-                    payloadData[rutaHistorial] = datosDeActualizacion[rutaHistorial];
-
-                    await setDoc(hincaRef, payloadData, { merge: true });
-                } else {
                     await updateDoc(hincaRef, datosDeActualizacion);
                 }
                 console.log(`Cambio auditado en historial: Modificacion_${nextModNumber}`);
@@ -609,6 +596,9 @@
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     toleranciasGlobales = docSnap.data();
+                    console.log("Tolerancias cargadas para " + proyectoActual);
+                } else {
+                    console.warn("No se encontraron tolerancias para " + proyectoActual);
                 }
             } catch (e) {
                 console.error("Error descargando tolerancias:", e);
@@ -618,7 +608,7 @@
         descargarTolerancias();
 
         // ============================================================================
-        // FUNCIONES GENERALES DE UI
+        // FUNCIONES GENERALES DE UI (ACTUALIZADO EL ORDEN)
         // ============================================================================
         
         const FILAS_HINCA = ['17', '16', '15', '14', '13', '12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1'];
@@ -658,6 +648,10 @@
             setTimeout(() => { if(alertDiv) { alertDiv.classList.remove('show'); setTimeout(() => alertDiv.remove(), 300); } }, 4000);
         }
 
+        // ============================================================================
+        // [MODIFICADO] "CEREBRO CRONOLÓGICO" EXTRACTOR DE ÚLTIMAS ALERTAS MÓVILES
+        // Se quitó la evaluación de empotramiento. Ahora el móvil solo lee Inclinación y Torsión.
+        // ============================================================================
         function extraerUltimasAlertasMoviles(datosProceso) {
             let result = {
                 distN: '', distS: '', distE: '', distW: '', altura: '',
@@ -728,30 +722,60 @@
             return result;
         }
 
+        // ============================================================================
+        // [NUEVO] EVALUADOR WEB PARA LA ALTURA DE DISEÑO (FIREBASE DRIVEN)
+        // ============================================================================
+
         function evaluarAlertaWebDiseno(alturaTerreno, alturaDiseno, tipoHinca, docTolerancias) {
-            if (!alturaDiseno || alturaDiseno === "" || alturaDiseno == 0) { return { texto: "— Pendiente —", clase: "text-muted" }; }
-            if (!alturaTerreno || alturaTerreno === "" || alturaTerreno == 0) { return { texto: "— Altura Real Pendiente —", clase: "text-muted" }; }
+            
+            // 1. Si no hay altura de diseño ingresada en la web
+            if (!alturaDiseno || alturaDiseno === "" || alturaDiseno == 0) {
+                return { texto: "— Pendiente —", clase: "text-muted" };
+            }
 
-            let aReal = parseFloat(alturaTerreno); let aDiseno = parseFloat(alturaDiseno);
-            let toleranciaDiferencia = 0.03; 
-            if (docTolerancias && docTolerancias.tolerancia_altura_m) { toleranciaDiferencia = parseFloat(docTolerancias.tolerancia_altura_m); }
+            // 2. Si el móvil no registró altura por algún motivo
+            if (!alturaTerreno || alturaTerreno === "" || alturaTerreno == 0) {
+                return { texto: "— Altura Real Pendiente —", clase: "text-muted" };
+            }
 
-            let fallaTolerancia3cm = false; let fallaEmpotramiento = false;
-            let minPermitidoDiseno = aDiseno - toleranciaDiferencia; let maxPermitidoDiseno = aDiseno + toleranciaDiferencia;
+            // Parseamos a números
+            let aReal = parseFloat(alturaTerreno);
+            let aDiseno = parseFloat(alturaDiseno);
 
-            if (parseFloat(aReal.toFixed(3)) < parseFloat(minPermitidoDiseno.toFixed(3)) || parseFloat(aReal.toFixed(3)) > parseFloat(maxPermitidoDiseno.toFixed(3))) {
+            // 3. Rescatamos tolerancias globales dinámicas
+            let toleranciaDiferencia = 0.03; // Base por defecto (3cm)
+            if (docTolerancias && docTolerancias.tolerancia_altura_m) {
+                toleranciaDiferencia = parseFloat(docTolerancias.tolerancia_altura_m);
+            }
+
+            let fallaTolerancia3cm = false;
+            let fallaEmpotramiento = false;
+
+            // EVALUACIÓN A: Diferencia estricta de Tolerancia (± 3cm)
+            let minPermitidoDiseno = aDiseno - toleranciaDiferencia;
+            let maxPermitidoDiseno = aDiseno + toleranciaDiferencia;
+
+            if (parseFloat(aReal.toFixed(3)) < parseFloat(minPermitidoDiseno.toFixed(3)) || 
+                parseFloat(aReal.toFixed(3)) > parseFloat(maxPermitidoDiseno.toFixed(3))) {
                 fallaTolerancia3cm = true;
             }
 
+            // EVALUACIÓN B: Regla de Empotramiento de la Hinca (Base de Datos)
             if (docTolerancias && tipoHinca) {
+                
+                // Normalizamos el tipo de hinca para buscarlo en Firebase como se hace en el móvil
                 let tipoLimpioApp = tipoHinca.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
                 let reglasTipo = null;
 
-                if (docTolerancias[tipoHinca] && typeof docTolerancias[tipoHinca] === 'object') { reglasTipo = docTolerancias[tipoHinca]; } 
-                else {
+                if (docTolerancias[tipoHinca] && typeof docTolerancias[tipoHinca] === 'object') {
+                    reglasTipo = docTolerancias[tipoHinca];
+                } else {
                     for (let key in docTolerancias) {
                         let keyLimpiaDb = key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-                        if (keyLimpiaDb === tipoLimpioApp && typeof docTolerancias[key] === 'object') { reglasTipo = docTolerancias[key]; break; }
+                        if (keyLimpiaDb === tipoLimpioApp && typeof docTolerancias[key] === 'object') {
+                            reglasTipo = docTolerancias[key];
+                            break;
+                        }
                     }
                 }
 
@@ -760,22 +784,37 @@
                     let longitudPoste = parseFloat(reglasTipo.longitud || 0);
                     let empotramientoMin = parseFloat(reglasTipo.empotramiento_min || 0);
 
-                    if (parseFloat(aDiseno.toFixed(3)) > parseFloat(alturaMaxFisica.toFixed(3))) { fallaEmpotramiento = true; }
+                    // Sub-regla 1: Evaluamos la altura de DISEÑO contra el máximo permitido (No la altura real)
+                    if (parseFloat(aDiseno.toFixed(3)) > parseFloat(alturaMaxFisica.toFixed(3))) {
+                        fallaEmpotramiento = true;
+                    }
+
+                    // Sub-regla 2: El poste debe estar enterrado lo suficiente (Calculado con la altura de diseño)
                     if (longitudPoste > 0 && empotramientoMin > 0) {
                         let empotramientoReal = longitudPoste - aDiseno;
-                        if (parseFloat(empotramientoReal.toFixed(3)) < parseFloat(empotramientoMin.toFixed(3))) { fallaEmpotramiento = true; }
+                        if (parseFloat(empotramientoReal.toFixed(3)) < parseFloat(empotramientoMin.toFixed(3))) {
+                            fallaEmpotramiento = true;
+                        }
                     }
+                } else {
+                    console.warn("No se encontraron reglas específicas en DB para el tipo de hinca:", tipoHinca);
                 }
             }
 
-            if (fallaEmpotramiento && fallaTolerancia3cm) { return { texto: "No Cumple empotramiento / No cumple tolerancia de 3CM", clase: "text-danger" }; } 
-            else if (fallaTolerancia3cm) { return { texto: "NO CUMPLE TOLERANCIA DE 3CM DEL WEB", clase: "text-danger" }; } 
-            else if (fallaEmpotramiento) { return { texto: "NO CUMPLE EMPOTRAMIENTO", clase: "text-danger" }; } 
-            else { return { texto: "CUMPLE TOLERANCIA DE 3CM", clase: "text-success" }; }
+            // 4. RETORNO DE LA ETIQUETA
+            if (fallaEmpotramiento && fallaTolerancia3cm) {
+                return { texto: "No Cumple empotramiento / No cumple tolerancia de 3CM", clase: "text-danger" };
+            } else if (fallaTolerancia3cm) {
+                return { texto: "NO CUMPLE TOLERANCIA DE 3CM DEL WEB", clase: "text-danger" };
+            } else if (fallaEmpotramiento) {
+                return { texto: "NO CUMPLE EMPOTRAMIENTO", clase: "text-danger" };
+            } else {
+                return { texto: "CUMPLE TOLERANCIA DE 3CM", clase: "text-success" };
+            }
         }
 
         // ============================================================================
-        // INICIO DE LA APLICACIÓN
+        // INICIO DE LA APLICACIÓN Y CARGA DE SUBCAMPOS
         // ============================================================================
         document.addEventListener("DOMContentLoaded", async function() {
             const selectSubcampo = document.getElementById('selectSubcampo');
@@ -800,22 +839,33 @@
                 });
 
                 subcamposArray.sort((a, b) => a.id_subcampo - b.id_subcampo);
-                subcamposArray.forEach(data => { selectSubcampo.innerHTML += `<option value="${data.id_subcampo}">SC#${data.id_subcampo} - ${data.nombre_subcampo}</option>`; });
 
-                if(subcamposArray.length === 0) { selectSubcampo.innerHTML = '<option value="" disabled>No hay subcampos en este proyecto</option>'; }
-            } catch (error) { selectSubcampo.innerHTML = '<option value="" disabled>Error de conexión</option>'; }
+                subcamposArray.forEach(data => {
+                    selectSubcampo.innerHTML += `<option value="${data.id_subcampo}">SC#${data.id_subcampo} - ${data.nombre_subcampo}</option>`;
+                });
+
+                if(subcamposArray.length === 0) {
+                    selectSubcampo.innerHTML = '<option value="" disabled>No hay subcampos en este proyecto</option>';
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                selectSubcampo.innerHTML = '<option value="" disabled>Error de conexión</option>';
+            }
 
             selectSubcampo.addEventListener('change', function() {
                 const idSeleccionado = this.value;
                 if(!idSeleccionado) return;
                 datosSubcampoActual = subcamposCache[idSeleccionado];
-                pantallaEspera.classList.add('d-none'); planoContainer.classList.add('d-none'); planoLoader.classList.remove('d-none');
+                pantallaEspera.classList.add('d-none');
+                planoContainer.classList.add('d-none');
+                planoLoader.classList.remove('d-none');
                 setTimeout(() => { dibujarPlanoSubcampo(datosSubcampoActual); }, 300);
             });
 
             document.getElementById('btnRefrescarDatos').addEventListener('click', () => {
                 if(datosSubcampoActual) {
-                    planoContainer.classList.add('d-none'); planoLoader.classList.remove('d-none');
+                    planoContainer.classList.add('d-none');
+                    planoLoader.classList.remove('d-none');
                     setTimeout(() => dibujarPlanoSubcampo(datosSubcampoActual), 300);
                 }
             });
@@ -831,11 +881,15 @@
 
                 for (let i = 1; i <= 4; i++) {
                     const numTrackers = trackers[`sec${i}`];
-                    if (numTrackers && numTrackers > 0) { seccionesRenderArea.innerHTML += generarHtmlSeccion(data.id_subcampo, i, numTrackers); }
+                    if (numTrackers && numTrackers > 0) {
+                        seccionesRenderArea.innerHTML += generarHtmlSeccion(data.id_subcampo, i, numTrackers);
+                    }
                 }
 
                 document.querySelectorAll('.hinca-node').forEach(node => {
-                    node.addEventListener('click', function() { abrirPanelHinca(this.dataset.sc, this.dataset.sec, this.dataset.tk, this.dataset.row); });
+                    node.addEventListener('click', function() {
+                        abrirPanelHinca(this.dataset.sc, this.dataset.sec, this.dataset.tk, this.dataset.row);
+                    });
                 });
 
                 cargarDatosControlHincas(data.id_subcampo, totalHincas);
@@ -846,6 +900,7 @@
                 FILAS_HINCA.forEach(label => { html += `<div class="row-label">${label}</div>`; });
                 html += `</div><div class="trackers-grid">`;
                 for (let col = 1; col <= numTrackers; col++) {
+                    // Círculo del Tracker con data-tkNum para recordar su número
                     html += `<div class="tracker-col" id="col_${numSeccion}_${col}"><div class="tracker-number" id="header_${numSeccion}_${col}" data-tknum="${col}">${col}</div>`;
                     FILAS_HINCA.forEach((label) => {
                         html += `<div class="hinca-node" data-sc="${idSubcampo}" data-sec="${numSeccion}" data-tk="${col}" data-row="${label}" title="Hinca: ${label} | TK: ${col}"></div>`;
@@ -864,8 +919,11 @@
                     let hincasConAltura = 0; let conformes = 0; let observadas = 0; let criticas = 0;
                     let trackersUnicos = new Set(); let trackerStats = {}; 
 
+                    // Limpieza inicial de todos los headers por si es un refresco
                     document.querySelectorAll('.tracker-number').forEach(el => { 
-                        el.className = 'tracker-number'; el.innerHTML = el.dataset.tknum; el.onclick = null;
+                        el.className = 'tracker-number'; 
+                        el.innerHTML = el.dataset.tknum; 
+                        el.onclick = null;
                     });
 
                     querySnapshot.forEach((docSnap) => {
@@ -887,8 +945,12 @@
                         
                         if (combinadoStr.includes('RECHAZADO')) { criticas++; claseColor = "rojo"; }
                         else if (combinadoStr.includes('CONFORME') || combinadoStr.includes('APROBADO') || combinadoStr.includes('HINCADO FINALIZADO')) { conformes++; claseColor = "verde"; }
-                        else if (subEventoFinalUpper.includes('PENDIENTE EXTRACCION') || subEventoFinalUpper.includes('PENDIENTE EXTRACCIÓN')) { observadas++; claseColor = "naranja"; }
-                        else if (combinadoStr.includes('PENDIENTE EXTRACCION') || combinadoStr.includes('PENDIENTE EXTRACCIÓN')) { observadas++; claseColor = "naranja"; }
+                        else if (subEventoFinalUpper.includes('PENDIENTE EXTRACCION') || subEventoFinalUpper.includes('PENDIENTE EXTRACCIÓN')) { 
+                            observadas++; claseColor = "naranja"; 
+                        }
+                        else if (combinadoStr.includes('PENDIENTE EXTRACCION') || combinadoStr.includes('PENDIENTE EXTRACCIÓN')) { 
+                            observadas++; claseColor = "naranja"; 
+                        }
                         else if (estadoStr && estadoStr !== '— Sin registrar —') { observadas++; claseColor = "ambar"; }
 
                         let s = h['1_datos_previos']?.['3_seccion']; let tk = h['1_datos_previos']?.['5_numero_tracker']; let rowNode = h['1_datos_previos']?.['6_numero_hinca']; 
@@ -900,7 +962,10 @@
                             const node = document.querySelector(`.hinca-node[data-sec="${s}"][data-tk="${tk}"][data-row="${rowNode}"]`);
                             if (node && claseColor) {
                                 node.className = `hinca-node ${claseColor}`;
-                                if (claseColor === 'verde' || claseColor === 'naranja') { trackerStats[tkKey].listos++; }
+                                // Validamos si el nodo está "Listo" para el reporte (Verde o Naranja)
+                                if (claseColor === 'verde' || claseColor === 'naranja') {
+                                    trackerStats[tkKey].listos++;
+                                }
                             }
                         }
                     });
@@ -911,6 +976,7 @@
                     document.getElementById('statObservadas').textContent = observadas;
                     document.getElementById('statCriticas').textContent = criticas;
 
+                    // Evaluamos qué Trackers completaron las 17 hincas en Verde/Naranja
                     for (let tkKey in trackerStats) {
                         let [s, tk] = tkKey.split('_');
                         if (trackerStats[tkKey].listos === 17) {
@@ -919,7 +985,9 @@
                                 header.classList.add('ready');
                                 header.innerHTML = '<i class="fas fa-check"></i>';
                                 header.title = "Tracker Completo: Clic para enviar a Reportes";
-                                header.onclick = () => { window.prepararCierreTracker(datosSubcampoActual.id_subcampo, s, tk); };
+                                header.onclick = () => {
+                                    window.prepararCierreTracker(datosSubcampoActual.id_subcampo, s, tk);
+                                };
                             }
                         }
                     }
@@ -930,11 +998,13 @@
                 }
             }
 
+            // FUNCIÓN PARA ABRIR MODAL DE CIERRE DE TRACKER
             window.prepararCierreTracker = function(sc, sec, tk) {
                 trackerACerrar = { sc, sec, tk };
                 modalCerrarTracker.show();
             };
 
+            // EJECUCIÓN DEL CIERRE DE TRACKER
             document.getElementById('btnConfirmarCierreTracker').addEventListener('click', async () => {
                 const btnConfirm = document.getElementById('btnConfirmarCierreTracker');
                 btnConfirm.disabled = true;
@@ -963,6 +1033,8 @@
                     
                     modalCerrarTracker.hide();
                     mostrarAlertaSuave(`Tracker ${trackerACerrar.tk} enviado a Reportes con éxito.`, "success");
+                    
+                    // Recargamos el plano para actualizar los datos
                     document.getElementById('btnRefrescarDatos').click();
 
                 } catch(e) {
@@ -986,10 +1058,12 @@
                 document.getElementById('txtProceso').textContent = '— Sin registrar —';
                 
                 const elAlertaReset = document.getElementById('txtAlertaHinca');
-                elAlertaReset.textContent = '— Sin registrar —'; elAlertaReset.className = 'info-movil-value text-muted';
+                elAlertaReset.textContent = '— Sin registrar —';
+                elAlertaReset.className = 'info-movil-value text-muted';
                 
                 const txtAlertaAlturaDiseno = document.getElementById('txtAlertaAlturaDiseno');
-                txtAlertaAlturaDiseno.textContent = '— Pendiente —'; txtAlertaAlturaDiseno.className = 'info-movil-value text-muted';
+                txtAlertaAlturaDiseno.textContent = '— Pendiente —';
+                txtAlertaAlturaDiseno.className = 'info-movil-value text-muted';
 
                 document.getElementById('inpObservacion').value = '';
                 
@@ -1003,7 +1077,9 @@
                 btnAprobar.className = 'btn btn-panel-action btn-aprobar'; btnAprobar.innerHTML = '<i class="fas fa-check-circle me-1"></i> Aprobar conforme'; btnAprobar.disabled = false;
                 btnRechazar.className = 'btn btn-panel-action btn-rechazar'; btnRechazar.innerHTML = '<i class="fas fa-times-circle me-1"></i> Rechazar'; btnRechazar.disabled = false;
                 
-                btnLiberar.className = 'btn w-100 mt-2 d-none fw-bold text-white btn-primary'; btnLiberar.innerHTML = '<i class="fas fa-unlock me-1"></i> Liberar Hinca (Editar)'; btnLiberar.disabled = false;
+                btnLiberar.className = 'btn w-100 mt-2 d-none fw-bold text-white btn-primary';
+                btnLiberar.innerHTML = '<i class="fas fa-unlock me-1"></i> Liberar Hinca (Editar)';
+                btnLiberar.disabled = false;
 
                 const inputsReset = document.querySelectorAll('.distancia-input');
                 inputsReset.forEach(inp => { inp.value = ''; inp.readOnly = false; });
@@ -1038,7 +1114,11 @@
                         const estaClausurada = data['4_estado_final']?.hinca_clausurada === true;
                         
                         let procesoActual = data['2_auditoria']?.['5_tipo_de_evento'] || '— Sin registrar —';
-                        if (esPendienteExtraccion) procesoActual = "PENDIENTE EXTRACCIÓN";
+                        
+                        if (esPendienteExtraccion) {
+                            procesoActual = "PENDIENTE EXTRACCIÓN";
+                        }
+                        
                         document.getElementById('txtProceso').textContent = procesoActual;
 
                         let badgesHtml = "";
@@ -1056,7 +1136,8 @@
                             badgesHtml += `<span class="badge-soft shadow-sm d-inline-flex align-items-center" style="background-color: rgba(245, 158, 11, 0.1); color: #f59e0b;"><i class="fas fa-lock me-1"></i>Pendiente Extracción (Bloqueado)</span>`;
                             btnAprobar.disabled = true; btnAprobar.className = 'btn btn-panel-action btn-aprobar';
                             btnRechazar.disabled = true; btnRechazar.className = 'btn btn-panel-action btn-rechazar';
-                            btnLiberar.classList.remove('d-none'); btnLiberar.className = 'btn btn-primary w-100 mt-2 fw-bold text-white'; btnLiberar.innerHTML = '<i class="fas fa-unlock me-1"></i> Liberar Hinca (Editar)';
+                            btnLiberar.classList.remove('d-none'); btnLiberar.className = 'btn btn-primary w-100 mt-2 fw-bold text-white';
+                            btnLiberar.innerHTML = '<i class="fas fa-unlock me-1"></i> Liberar Hinca (Editar)';
                             estaBloqueado = true;
                         } else {
                             badgesHtml += `<span class="badge-soft shadow-sm d-inline-flex align-items-center" style="background-color: rgba(255,193,7,0.1); color: #d39e00;"><i class="far fa-clock me-1"></i>Evaluación Pendiente</span>`;
@@ -1079,11 +1160,19 @@
                         }
 
                         if (procesosRealizados.size > 0) {
-                            procesosRealizados.forEach(proceso => { badgesHtml += `<span class="badge-soft badge-soft-primary border border-primary d-inline-flex align-items-center"><i class="fas fa-tag me-1"></i>${proceso}</span>`; });
-                        } else { badgesHtml += `<span class="badge-soft badge-soft-primary border border-primary d-inline-flex align-items-center">Sin Procesos</span>`; }
+                            procesosRealizados.forEach(proceso => {
+                                badgesHtml += `<span class="badge-soft badge-soft-primary border border-primary d-inline-flex align-items-center"><i class="fas fa-tag me-1"></i>${proceso}</span>`;
+                            });
+                        } else {
+                            badgesHtml += `<span class="badge-soft badge-soft-primary border border-primary d-inline-flex align-items-center">Sin Procesos</span>`;
+                        }
                         contenedorBadges.innerHTML = badgesHtml;
 
+                        // =========================================================================
+                        // LÓGICA DIVIDIDA DE ALERTAS (Móvil vs Web)
+                        // =========================================================================
                         let ultimasAlertasMoviles = extraerUltimasAlertasMoviles(data['3_datos_de_proceso']);
+
                         const inputs = document.querySelectorAll('.distancia-input');
                         if (inputs.length >= 5) {
                             inputs[0].value = ultimasAlertasMoviles.distN ?? '';
@@ -1094,49 +1183,69 @@
                             inputs.forEach(inp => inp.readOnly = true);
                         }
 
+                        // 1. Inyectar Alerta Móvil Cruda (Inclinaciones y Torsión)
                         let fallosMovil = [];
                         if (ultimasAlertasMoviles.alertaNS && ultimasAlertasMoviles.alertaNS !== 'CUMPLE' && ultimasAlertasMoviles.alertaNS !== 'DENTRO DE TOLERANCIA') fallosMovil.push("Alerta Inclinación N/S");
                         if (ultimasAlertasMoviles.alertaEW && ultimasAlertasMoviles.alertaEW !== 'CUMPLE' && ultimasAlertasMoviles.alertaEW !== 'DENTRO DE TOLERANCIA') fallosMovil.push("Alerta Inclinación E/O");
                         if (ultimasAlertasMoviles.alertaTorsion && ultimasAlertasMoviles.alertaTorsion !== 'CUMPLE' && ultimasAlertasMoviles.alertaTorsion !== 'DENTRO DE TOLERANCIA') fallosMovil.push("Alerta Torsión");
 
-                        let txtAlertaMovil = "CUMPLE"; let claseAlertaMovil = "text-success";
-                        if (!ultimasAlertasMoviles.altura && !ultimasAlertasMoviles.distN) { txtAlertaMovil = "— Sin registrar —"; claseAlertaMovil = "text-muted"; } 
-                        else if (fallosMovil.length === 1) { txtAlertaMovil = fallosMovil[0]; claseAlertaMovil = "text-danger"; } 
-                        else if (fallosMovil.length >= 2) { txtAlertaMovil = fallosMovil.length + " alertas geométricas"; claseAlertaMovil = "text-danger"; }
+                        let txtAlertaMovil = "CUMPLE";
+                        let claseAlertaMovil = "text-success";
+
+                        if (!ultimasAlertasMoviles.altura && !ultimasAlertasMoviles.distN) { 
+                            txtAlertaMovil = "— Sin registrar —";
+                            claseAlertaMovil = "text-muted";
+                        } else if (fallosMovil.length === 1) {
+                            txtAlertaMovil = fallosMovil[0];
+                            claseAlertaMovil = "text-danger";
+                        } else if (fallosMovil.length >= 2) {
+                            txtAlertaMovil = fallosMovil.length + " alertas geométricas";
+                            claseAlertaMovil = "text-danger";
+                        }
 
                         const elAlerta = document.getElementById('txtAlertaHinca');
-                        elAlerta.textContent = txtAlertaMovil; elAlerta.className = 'info-movil-value ' + claseAlertaMovil;
+                        elAlerta.textContent = txtAlertaMovil;
+                        elAlerta.className = 'info-movil-value ' + claseAlertaMovil;
 
+                        // 2. Evaluar Alerta Web de Altura de Diseño (Inyecta el nuevo Motor JavaScript)
                         let alturaDisenoEnDB = data.altura_diseno;
 
                         if (alturaDisenoEnDB !== undefined && alturaDisenoEnDB !== "") {
                             const alturaGuardadaNum = parseFloat(alturaDisenoEnDB);
                             inpAltura.value = alturaGuardadaNum.toFixed(2);
                             inpAltura.disabled = true;
-                            if (estaBloqueado) btnEditar.classList.add('d-none'); else btnEditar.classList.remove('d-none');
+                            if (estaBloqueado) btnEditar.classList.add('d-none');
+                            else btnEditar.classList.remove('d-none');
 
+                            // Llamada al motor para cruzar los datos
                             let resultadoWeb = evaluarAlertaWebDiseno(ultimasAlertasMoviles.altura, alturaGuardadaNum, tipoHincaExtraido, toleranciasGlobales);
-                            txtAlertaAlturaDiseno.textContent = resultadoWeb.texto; txtAlertaAlturaDiseno.className = 'info-movil-value ' + resultadoWeb.clase;
+                            
+                            txtAlertaAlturaDiseno.textContent = resultadoWeb.texto;
+                            txtAlertaAlturaDiseno.className = 'info-movil-value ' + resultadoWeb.clase;
 
                         } else {
                             inpAltura.disabled = estaBloqueado;
-                            if (estaBloqueado) btnGuardar.classList.add('d-none'); else btnGuardar.classList.remove('d-none');
-                            txtAlertaAlturaDiseno.textContent = "— Pendiente de Diseño —"; txtAlertaAlturaDiseno.className = "info-movil-value text-muted";
+                            if (estaBloqueado) btnGuardar.classList.add('d-none');
+                            else btnGuardar.classList.remove('d-none');
+                            txtAlertaAlturaDiseno.textContent = "— Pendiente de Diseño —";
+                            txtAlertaAlturaDiseno.className = "info-movil-value text-muted";
                         }
 
                         if (data.observacion) document.getElementById('inpObservacion').value = data.observacion;
-                        document.getElementById('inpObservacion').disabled = estaBloqueado; document.getElementById('btnGuardarObservacion').disabled = estaBloqueado;
+                        document.getElementById('inpObservacion').disabled = estaBloqueado;
+                        document.getElementById('btnGuardarObservacion').disabled = estaBloqueado;
 
                     } else {
                         contenedorBadges.innerHTML = `<span class="badge-soft badge-soft-primary border border-primary d-inline-flex align-items-center">Sin Registros en Base de Datos</span>`;
                         const inputs = document.querySelectorAll('.distancia-input');
                         inputs.forEach(inp => { inp.value = ''; inp.readOnly = true; });
-                        inpAltura.disabled = false; btnGuardar.classList.remove('d-none');
-                        // No bloqueamos los botones, permitimos que la validación los ataje
+                        inpAltura.disabled = false;
+                        btnGuardar.classList.remove('d-none');
                     }
                 }).catch(err => {
                     console.error("Error cargando detalle:", err);
-                    inpAltura.disabled = false; btnGuardar.classList.remove('d-none');
+                    inpAltura.disabled = false;
+                    btnGuardar.classList.remove('d-none');
                 });
             }
 
@@ -1170,13 +1279,14 @@
                         hTerrenoStr = alertasM.altura;
                     }
 
-                    // Evaluar en vivo para la auditoría
+                    // Evaluar en vivo para actualizar el UI sin refrescar
                     let resultadoValidacionEnVivo = evaluarAlertaWebDiseno(hTerrenoStr, valor, tipoHincaExtraido, toleranciasGlobales);
                     
                     const elTolerancia = document.getElementById('txtAlertaAlturaDiseno');
                     elTolerancia.textContent = resultadoValidacionEnVivo.texto;
                     elTolerancia.className = 'info-movil-value ' + resultadoValidacionEnVivo.clase;
 
+                    // NUEVA LÓGICA DE AUDITORÍA (HISTORIAL MODIFICACION_N)
                     let extraDataHistorial = {
                         "Altura_diseño": valor.toFixed(2),
                         "Validación Altura Diseño": resultadoValidacionEnVivo.texto
@@ -1192,30 +1302,33 @@
                             extraDataHistorial
                         );
                     } else {
-                        // SOLUCIÓN AL MODO ESQUELETO CON OBJETO ANIDADO LIMPIO
+                        // MODO ESQUELETO
+                        let payloadBase = {
+                            "altura_diseno": valor.toFixed(2),
+                            "1_datos_previos": {
+                                "1_proyecto": proyectoActual,
+                                "2_cuadrilla": "Sin registrar",
+                                "3_seccion": hincaActual.seccion.toString(),
+                                "4_subcampo": hincaActual.sc.toString(),
+                                "5_numero_tracker": hincaActual.tracker.toString(),
+                                "6_numero_hinca": hincaActual.hincaRow,
+                                "7_tipo_de_hinca": tipoHincaExtraido
+                            }
+                        };
+                        
                         await registrarCambioYGuardarHistorial(
                             hincaActual.idDoc,
                             "Asignación Altura Diseño (Nueva)",
                             `Se asignó altura inicial de ${valor.toFixed(2)}m a hinca vacía.`,
-                            {
-                                "altura_diseno": valor.toFixed(2),
-                                "1_datos_previos": {
-                                    "1_proyecto": proyectoActual,
-                                    "2_cuadrilla": "Sin registrar",
-                                    "3_seccion": hincaActual.seccion.toString(),
-                                    "4_subcampo": hincaActual.sc.toString(),
-                                    "5_numero_tracker": hincaActual.tracker.toString(),
-                                    "6_numero_hinca": hincaActual.hincaRow,
-                                    "7_tipo_de_hinca": tipoHincaExtraido
-                                }
-                            },
+                            payloadBase,
                             extraDataHistorial,
                             true
                         );
                     }
 
                     inpAltura.disabled = true;
-                    btnGuardar.classList.add('d-none'); btnEditar.classList.remove('d-none');
+                    btnGuardar.classList.add('d-none');
+                    btnEditar.classList.remove('d-none');
                     mostrarAlertaSuave("Altura de diseño guardada y auditada.", "success");
 
                     if(datosSubcampoActual) {
@@ -1226,7 +1339,8 @@
                 } catch (error) {
                     mostrarAlertaSuave("Error al guardar en la base de datos.", "danger");
                 } finally {
-                    btnGuardar.disabled = false; btnGuardar.innerHTML = '<i class="fas fa-save me-1"></i> Guardar';
+                    btnGuardar.disabled = false;
+                    btnGuardar.innerHTML = '<i class="fas fa-save me-1"></i> Guardar';
                 }
             });
 
@@ -1242,7 +1356,8 @@
                 const observacion = document.getElementById('inpObservacion').value;
                 const btnObs = document.getElementById('btnGuardarObservacion');
                 
-                btnObs.disabled = true; btnObs.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                btnObs.disabled = true;
+                btnObs.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
                 try {
                     let camposAActualizar = { "observacion": observacion };
@@ -1284,7 +1399,8 @@
                     }, 2000);
                 } catch (error) {
                     mostrarAlertaSuave("Error guardando el comentario.", "danger");
-                    btnObs.disabled = false; btnObs.innerHTML = '<i class="fas fa-save me-1"></i> Guardar Comentario';
+                    btnObs.disabled = false;
+                    btnObs.innerHTML = '<i class="fas fa-save me-1"></i> Guardar Comentario';
                 }
             });
 
@@ -1293,7 +1409,6 @@
                 
                 const tipoHincaValidacion = document.getElementById('txtTipoHinca').textContent;
                 
-                // SOLUCIÓN: Validamos si hay datos de campo. Si no hay, bloqueamos y salimos.
                 if (tipoHincaValidacion === '— Sin registrar —') {
                     mostrarAlertaSuave("No puede aprobar una hinca que no tiene registros operativos del móvil.", "danger");
                     return;
@@ -1304,7 +1419,8 @@
 
                 if (!inpAltura.value || !btnGuardar.classList.contains('d-none')) {
                     mostrarAlertaSuave("Atención: Debe ingresar y GUARDAR la Altura de Diseño antes de aprobar.", "warning");
-                    inpAltura.style.borderColor = "#ffc107"; inpAltura.style.boxShadow = "0 0 0 0.25rem rgba(255, 193, 7, 0.25)";
+                    inpAltura.style.borderColor = "#ffc107";
+                    inpAltura.style.boxShadow = "0 0 0 0.25rem rgba(255, 193, 7, 0.25)";
                     setTimeout(() => { inpAltura.style.borderColor = ""; inpAltura.style.boxShadow = ""; }, 2500);
                     return;
                 }
@@ -1328,19 +1444,31 @@
                             {}
                         );
                         
-                        btnAprobar.className = 'btn btn-panel-action btn-success text-white'; btnAprobar.innerHTML = '<i class="fas fa-check-circle me-1"></i> Aprobado';
-                        btnAprobar.disabled = true; btnRechazar.disabled = true; 
+                        btnAprobar.className = 'btn btn-panel-action btn-success text-white';
+                        btnAprobar.innerHTML = '<i class="fas fa-check-circle me-1"></i> Aprobado';
+                        btnAprobar.disabled = true; 
+                        btnRechazar.disabled = true; 
                         
-                        btnLiberar.classList.replace('btn-warning', 'btn-primary'); btnLiberar.classList.remove('d-none');
+                        btnLiberar.classList.replace('btn-warning', 'btn-primary');
+                        btnLiberar.classList.remove('d-none');
 
                         const contenedorBadges = document.getElementById('contenedorBadges');
                         let htmlActual = contenedorBadges.innerHTML;
-                        htmlActual = htmlActual.replace(/Evaluación Pendiente/g, 'Aprobado Web'); htmlActual = htmlActual.replace(/Rechazado Web/g, 'Aprobado Web'); htmlActual = htmlActual.replace(/Pendiente Extracción \(Bloqueado\)/g, 'Aprobado Web');
+                        htmlActual = htmlActual.replace(/Evaluación Pendiente/g, 'Aprobado Web');
+                        htmlActual = htmlActual.replace(/Rechazado Web/g, 'Aprobado Web');
+                        htmlActual = htmlActual.replace(/Pendiente Extracción \(Bloqueado\)/g, 'Aprobado Web');
                         
-                        if(!htmlActual.includes('Aprobado Web')) { htmlActual = `<span class="badge-soft badge-soft-success shadow-sm d-inline-flex align-items-center me-1"><i class="fas fa-check-double me-1"></i>Aprobado Web</span>` + htmlActual; }
+                        if(!htmlActual.includes('Aprobado Web')) {
+                            htmlActual = `<span class="badge-soft badge-soft-success shadow-sm d-inline-flex align-items-center me-1"><i class="fas fa-check-double me-1"></i>Aprobado Web</span>` + htmlActual;
+                        }
                         contenedorBadges.innerHTML = htmlActual;
 
-                        document.getElementById('inpAlturaDiseno').disabled = true; document.getElementById('btnEditarAltura').classList.add('d-none'); document.getElementById('btnGuardarAltura').classList.add('d-none'); document.getElementById('inpObservacion').disabled = true; document.getElementById('btnGuardarObservacion').disabled = true;
+                        document.getElementById('inpAlturaDiseno').disabled = true;
+                        document.getElementById('btnEditarAltura').classList.add('d-none');
+                        document.getElementById('btnGuardarAltura').classList.add('d-none');
+                        document.getElementById('inpObservacion').disabled = true;
+                        document.getElementById('btnGuardarObservacion').disabled = true;
+                        
                         mostrarAlertaSuave("Hinca aprobada exitosamente y auditada.", "success");
 
                         if(datosSubcampoActual) {
@@ -1348,7 +1476,8 @@
                             cargarDatosControlHincas(datosSubcampoActual.id_subcampo, totalTrackers * 17);
                         }
                     } catch(e) {
-                        btnAprobar.disabled = false; mostrarAlertaSuave("Error de conexión al aprobar la hinca.", "danger");
+                        btnAprobar.disabled = false;
+                        mostrarAlertaSuave("Error de conexión al aprobar la hinca.", "danger");
                     }
                 });
             });
@@ -1358,7 +1487,6 @@
                 
                 const tipoHincaValidacion = document.getElementById('txtTipoHinca').textContent;
                 
-                // SOLUCIÓN: Validamos si hay datos de campo. Si no hay, bloqueamos y salimos.
                 if (tipoHincaValidacion === '— Sin registrar —') {
                     mostrarAlertaSuave("No puede rechazar una hinca que no tiene registros operativos del móvil.", "danger");
                     return;
@@ -1383,19 +1511,30 @@
                             {}
                         );
                         
-                        btnRechazar.className = 'btn btn-panel-action btn-danger text-white'; btnRechazar.innerHTML = '<i class="fas fa-times-circle me-1"></i> Rechazado';
-                        btnRechazar.disabled = true; btnAprobar.disabled = true; 
+                        btnRechazar.className = 'btn btn-panel-action btn-danger text-white';
+                        btnRechazar.innerHTML = '<i class="fas fa-times-circle me-1"></i> Rechazado';
+                        btnRechazar.disabled = true; 
+                        btnAprobar.disabled = true; 
                         
-                        btnLiberar.classList.replace('btn-warning', 'btn-primary'); btnLiberar.classList.remove('d-none');
+                        btnLiberar.classList.replace('btn-warning', 'btn-primary');
+                        btnLiberar.classList.remove('d-none');
 
                         const contenedorBadges = document.getElementById('contenedorBadges');
                         let htmlActual = contenedorBadges.innerHTML;
-                        htmlActual = htmlActual.replace(/Evaluación Pendiente/g, 'Rechazado Web'); htmlActual = htmlActual.replace(/Aprobado Web/g, 'Rechazado Web'); htmlActual = htmlActual.replace(/Pendiente Extracción \(Bloqueado\)/g, 'Rechazado Web');
+                        htmlActual = htmlActual.replace(/Evaluación Pendiente/g, 'Rechazado Web');
+                        htmlActual = htmlActual.replace(/Aprobado Web/g, 'Rechazado Web');
+                        htmlActual = htmlActual.replace(/Pendiente Extracción \(Bloqueado\)/g, 'Rechazado Web');
                         
-                        if(!htmlActual.includes('Rechazado Web')) { htmlActual = `<span class="badge-soft badge-soft-danger shadow-sm d-inline-flex align-items-center me-1" style="background-color: rgba(220,53,69,0.1); color: #dc3545;"><i class="fas fa-ban me-1"></i>Rechazado Web</span>` + htmlActual; }
+                        if(!htmlActual.includes('Rechazado Web')) {
+                            htmlActual = `<span class="badge-soft badge-soft-danger shadow-sm d-inline-flex align-items-center me-1" style="background-color: rgba(220,53,69,0.1); color: #dc3545;"><i class="fas fa-ban me-1"></i>Rechazado Web</span>` + htmlActual;
+                        }
                         contenedorBadges.innerHTML = htmlActual;
 
-                        document.getElementById('inpAlturaDiseno').disabled = true; document.getElementById('btnEditarAltura').classList.add('d-none'); document.getElementById('btnGuardarAltura').classList.add('d-none'); document.getElementById('inpObservacion').disabled = true; document.getElementById('btnGuardarObservacion').disabled = true;
+                        document.getElementById('inpAlturaDiseno').disabled = true;
+                        document.getElementById('btnEditarAltura').classList.add('d-none');
+                        document.getElementById('btnGuardarAltura').classList.add('d-none');
+                        document.getElementById('inpObservacion').disabled = true;
+                        document.getElementById('btnGuardarObservacion').disabled = true;
 
                         mostrarAlertaSuave("La hinca ha sido rechazada y el evento fue auditado.", "danger");
 
@@ -1404,14 +1543,17 @@
                             cargarDatosControlHincas(datosSubcampoActual.id_subcampo, totalTrackers * 17);
                         }
                     } catch(e) {
-                        btnRechazar.disabled = false; mostrarAlertaSuave("Error de conexión al rechazar la hinca.", "danger");
+                        btnRechazar.disabled = false;
+                        mostrarAlertaSuave("Error de conexión al rechazar la hinca.", "danger");
                     }
                 });
             });
 
             const modalLiberacion = new bootstrap.Modal(document.getElementById('modalConfirmarLiberacion'));
 
-            document.getElementById('btnLiberarHinca').addEventListener('click', () => { modalLiberacion.show(); });
+            document.getElementById('btnLiberarHinca').addEventListener('click', () => {
+                modalLiberacion.show();
+            });
 
             document.getElementById('btnConfirmarLiberacionReal').addEventListener('click', async () => {
                 const btnAprobar = document.getElementById('btnAprobarHinca');
@@ -1419,7 +1561,9 @@
                 const btnLiberar = document.getElementById('btnLiberarHinca');
                 const btnConfirmarModal = document.getElementById('btnConfirmarLiberacionReal');
                 
-                btnConfirmarModal.disabled = true; btnConfirmarModal.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Liberando...'; btnLiberar.disabled = true;
+                btnConfirmarModal.disabled = true;
+                btnConfirmarModal.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Liberando...';
+                btnLiberar.disabled = true;
 
                 try {
                     await registrarCambioYGuardarHistorial(
@@ -1436,15 +1580,28 @@
 
                     const contenedorBadges = document.getElementById('contenedorBadges');
                     let htmlActual = contenedorBadges.innerHTML;
-                    htmlActual = htmlActual.replace(/Aprobado Web/g, 'Evaluación Pendiente'); htmlActual = htmlActual.replace(/Rechazado Web/g, 'Evaluación Pendiente'); htmlActual = htmlActual.replace(/Pendiente Extracción \(Bloqueado\)/g, 'Evaluación Pendiente');
+                    htmlActual = htmlActual.replace(/Aprobado Web/g, 'Evaluación Pendiente');
+                    htmlActual = htmlActual.replace(/Rechazado Web/g, 'Evaluación Pendiente');
+                    htmlActual = htmlActual.replace(/Pendiente Extracción \(Bloqueado\)/g, 'Evaluación Pendiente');
                     contenedorBadges.innerHTML = htmlActual;
 
-                    btnAprobar.className = 'btn btn-panel-action btn-aprobar'; btnAprobar.innerHTML = '<i class="fas fa-check-circle me-1"></i> Aprobar conforme'; btnAprobar.disabled = false;
-                    btnRechazar.className = 'btn btn-panel-action btn-rechazar'; btnRechazar.innerHTML = '<i class="fas fa-times-circle me-1"></i> Rechazar'; btnRechazar.disabled = false;
+                    btnAprobar.className = 'btn btn-panel-action btn-aprobar';
+                    btnAprobar.innerHTML = '<i class="fas fa-check-circle me-1"></i> Aprobar conforme';
+                    btnAprobar.disabled = false;
                     
-                    btnLiberar.classList.add('d-none'); btnLiberar.classList.replace('btn-warning', 'btn-primary'); btnLiberar.disabled = false;
+                    btnRechazar.className = 'btn btn-panel-action btn-rechazar';
+                    btnRechazar.innerHTML = '<i class="fas fa-times-circle me-1"></i> Rechazar';
+                    btnRechazar.disabled = false;
+                    
+                    btnLiberar.classList.add('d-none');
+                    btnLiberar.classList.replace('btn-warning', 'btn-primary'); 
+                    btnLiberar.disabled = false;
 
-                    document.getElementById('inpAlturaDiseno').disabled = false; document.getElementById('btnGuardarAltura').classList.remove('d-none'); document.getElementById('btnEditarAltura').classList.add('d-none'); document.getElementById('inpObservacion').disabled = false; document.getElementById('btnGuardarObservacion').disabled = false;
+                    document.getElementById('inpAlturaDiseno').disabled = false;
+                    document.getElementById('btnGuardarAltura').classList.remove('d-none');
+                    document.getElementById('btnEditarAltura').classList.add('d-none');
+                    document.getElementById('inpObservacion').disabled = false;
+                    document.getElementById('btnGuardarObservacion').disabled = false;
 
                     modalLiberacion.hide();
                     mostrarAlertaSuave("Hinca liberada. Se ha retirado el bloqueo para la aplicación móvil.", "warning");
@@ -1454,16 +1611,23 @@
                         cargarDatosControlHincas(datosSubcampoActual.id_subcampo, totalTrackers * 17);
                     }
                 } catch(e) {
-                    btnLiberar.disabled = false; mostrarAlertaSuave("Error de conexión al intentar liberar la hinca.", "danger");
+                    btnLiberar.disabled = false;
+                    mostrarAlertaSuave("Error de conexión al intentar liberar la hinca.", "danger");
                 } finally {
-                    btnConfirmarModal.disabled = false; btnConfirmarModal.innerHTML = 'Sí, Liberar Hinca';
+                    btnConfirmarModal.disabled = false;
+                    btnConfirmarModal.innerHTML = 'Sí, Liberar Hinca';
                 }
             });
 
         });
 
         window.cerrarSesionCompleta = function() {
-            localStorage.removeItem('usuarioAlfatek'); localStorage.removeItem('usuario_logueado_email'); localStorage.removeItem('id_usuario_actual'); localStorage.removeItem('proyecto_actual_web'); sessionStorage.clear(); window.location.href = 'login.html';
+            localStorage.removeItem('usuarioAlfatek');
+            localStorage.removeItem('usuario_logueado_email');
+            localStorage.removeItem('id_usuario_actual');
+            localStorage.removeItem('proyecto_actual_web');
+            sessionStorage.clear();
+            window.location.href = 'login.html';
         };
     </script>
 </body>
