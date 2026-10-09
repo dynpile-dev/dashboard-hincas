@@ -11,7 +11,6 @@
         body { height: 100vh; display: flex; align-items: center; justify-content: center; background: #f8f9fa; font-family: sans-serif; }
         .register-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
         
-        /* Contenedor del formulario con espaciado uniforme */
         #registerForm { display: flex; flex-direction: column; gap: 10px; }
         
         .input-group-custom { position: relative; }
@@ -83,7 +82,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN DE FIREBASE INTEGRADA
         const firebaseConfig = {
             apiKey: "AIzaSyDg7Ter_I5ryqyhE_fN9DHsSOL_ftPy80c",
             authDomain: "proyectohinca-5ef9d.firebaseapp.com",
@@ -108,7 +106,6 @@
             btnText.textContent = "Enviando solicitud...";
 
             try {
-                // Guardamos la solicitud en una colección global para que el admin la apruebe
                 await addDoc(collection(db, "Solicitudes_Registro"), {
                     Nombres: document.getElementById('regNombres').value,
                     Apellidos: document.getElementById('regApellidos').value,
@@ -132,9 +129,6 @@
             }
         });
 
-        // ==========================================
-        // [INICIO: FUNCIÓN PARA CERRAR SESIÓN SEGURA]
-        // ==========================================
         window.cerrarSesionCompleta = function() {
             localStorage.removeItem('usuarioAlfatek');
             localStorage.removeItem('usuario_logueado_email');
@@ -143,7 +137,6 @@
             sessionStorage.clear();
             window.location.href = 'login.html';
         };
-        // ==========================================
     </script>
 </body>
 </html>
