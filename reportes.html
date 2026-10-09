@@ -10,7 +10,6 @@
     <link href="carpeta_del_proyecto/css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     
-    <!-- LIBRERÍAS PARA GENERAR EXCEL EN LA NUBE -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
@@ -23,14 +22,10 @@
 
         html { overflow-y: scroll; }
 
-        /* ANTIFANTASMAS: Ocultar enlaces de navegación por defecto hasta validar permisos */
         .nav-link-restringido {
             display: none !important;
         }
 
-        /* ==========================================
-           DISEÑO DE MENÚ Y BARRA SUPERIOR
-           ========================================== */
         .bg-dark, .sb-topnav.navbar { background-color: var(--color-primary) !important; }
         .sb-sidenav-dark { background-color: #ffffff !important; border-right: 1px solid #e0e0e0; }
         .sb-sidenav-dark .sb-sidenav-menu-heading, .sb-sidenav-dark .sb-sidenav-footer { color: var(--color-secondary) !important; opacity: 0.8; border-top: 1px solid #f0f0f0; }
@@ -48,9 +43,6 @@
         .sb-topnav .navbar-nav .nav-link:hover { color: #ffffff !important; }
         .sb-topnav .navbar-brand { color: #ffffff !important; }
 
-        /* ==========================================
-           ESTILOS DE LA TABLA Y COLORES DE ESTADOS
-           ========================================== */
         .card-registro {
             border: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -78,7 +70,6 @@
         .dataTable-table > tbody > tr > td { vertical-align: middle; font-size: 0.85rem; color: #444; border-bottom: 1px solid #f4f4f4; }
         .col-destacada { font-weight: 700; color: var(--color-secondary); }
 
-        /* Badges de Estados/Alertas */
         .badge-estado {
             padding: 6px 12px;
             border-radius: 20px;
@@ -90,7 +81,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Colores exactos de vista */ 
         .st-verde { background-color: #16a34a; }
         .st-ambar { background-color: #ffc107; color: #000; }
         .st-naranja { background-color: #f59e0b; color: white; } 
@@ -102,7 +92,6 @@
         .st-morado { background-color: #7c3aed; }
         .st-vacio { background-color: #e9ecef; color: #6c757d; border: 1px solid #ced4da; }
 
-        /* Botones de acción */
         .btn-action {
             padding: 5px 10px;
             font-size: 0.8rem;
@@ -118,7 +107,6 @@
 
         .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
         
-        /* Loader de la tabla */
         .table-loader { padding: 50px 0; text-align: center; }
 
     </style>
@@ -184,7 +172,6 @@
 
                     <div id="alertFeedback" class="alert d-none" role="alert"></div>
 
-                    <!-- TABLA PRINCIPAL DE REGISTRO DE HINCAS -->
                     <div class="card card-registro mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5>Registro General</h5>
@@ -194,14 +181,12 @@
                         </div>
                         <div class="card-body px-0 pt-0">
                             
-                            <!-- Loader -->
                             <div id="tablaLoader" class="table-loader">
                                 <div class="spinner-border text-primary mb-2" role="status"></div>
                                 <div class="text-muted small">Descargando registros de este proyecto...</div>
                             </div>
 
                             <div class="p-3 d-none" id="tablaContainer">
-                                <!-- La tabla se genera dinámicamente -->
                             </div>
 
                         </div>
@@ -212,19 +197,14 @@
         </div>
     </div>
 
-    <!-- Scripts Base -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="carpeta_del_proyecto/js/scripts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
     
-    <!-- LÓGICA FIREBASE Y EXCELJS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ============================================================================
-        // 1. SEGURIDAD Y LECTURA DE SESIÓN / PROYECTO ACTUAL
-        // ============================================================================
         const proyectoActual = localStorage.getItem('proyecto_actual_web');
         const userDataStr = localStorage.getItem('usuarioAlfatek') || sessionStorage.getItem('usuarioAlfatek');
 
@@ -255,9 +235,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ============================================================================
-        // CAPA DE SEGURIDAD VISUAL
-        // ============================================================================
         const mapaModulosSeguridad = {
             "dashboard": "nav_dashboard", "creacion_subcampos": "nav_creacion_subcampos", "hincas": "nav_hincas",
             "historial_hinca": "nav_historial_hinca", "reportes": "nav_reportes", "configuracion": "nav_configuracion"
@@ -301,12 +278,10 @@
         }
         aplicarPermisosMatriz();
 
-        // ============================================================================
 
         let dataTableInstance = null;
         window.hincasDataCache = {};
         
-        // ¡ÚNICO CAMBIO: LISTA INVERTIDA DE HINCAS DEL 17 AL 1!
         const ORDEN_HINCAS_ESTRICTO = ['17', '16', '15', '14', '13', '12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1'];
 
         function mostrarAlerta(mensaje, tipo) { 
@@ -525,9 +500,6 @@
                     dataTableInstance = null;
                 }
 
-                // ==============================================================
-                // INYECCIÓN VISUAL ESTÉTICA PARA TABLA VACÍA SIN COLAPSAR
-                // ==============================================================
                 if (rowsHtml === '') {
                     container.innerHTML = `
                         <div class="d-flex flex-column align-items-center justify-content-center py-5 w-100 text-center">
@@ -585,9 +557,6 @@
             }
         }
 
-        // ==========================================
-        // MOTOR EXCELJS (PARA INYECTAR LOS DATOS DE FIREBASE)
-        // ==========================================
         window.generarReporteExcel = async function(idDocumento) {
             
             const btnHtmlOriginal = document.getElementById(`btnDl_${idDocumento}`).innerHTML;
