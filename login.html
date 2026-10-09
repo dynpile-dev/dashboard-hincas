@@ -6,13 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>Login - Alfatek Energy</title>
     
-    <!-- CSS de Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- Iconos Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-    <!-- === DISEÑO VISUAL MEJORADO === -->
     <style>
         :root {
             --color-primary: #0fb1a5;
@@ -115,7 +112,6 @@
             opacity: 1;
         }
 
-        /* Estilo base para inputs y selects */
         .input-group-custom .form-control {
             padding-left: 45px;
             padding-right: 45px;
@@ -125,13 +121,12 @@
             border-radius: 10px;
             font-size: 0.95rem;
             transition: all 0.3s ease;
-            appearance: none; /* Limpia el estilo nativo de los selects */
+            appearance: none; 
             -moz-appearance: none;
             -webkit-appearance: none;
             background-color: #fff;
         }
 
-        /* Flechita personalizada para el select */
         select.form-control {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
@@ -300,7 +295,6 @@
             flex-shrink: 0;
         }
 
-        /* === MENSAJES DE ALERTA === */
         .alert-custom {
             padding: 12px 16px;
             border-radius: 10px;
@@ -334,7 +328,6 @@
             75% { transform: translateX(5px); }
         }
 
-        /* === SPINNER DEL BOTÓN === */
         .spinner-border-sm {
             width: 1rem;
             height: 1rem;
@@ -354,7 +347,6 @@
 
     <div class="login-wrapper">
         
-        <!-- === COLUMNA FORMULARIO === -->
         <div class="form-column">
             <div class="form-container">
                 <div class="text-center mb-4">
@@ -363,7 +355,6 @@
                     <p class="text-muted-custom">Ingresa a tu cuenta para continuar.</p>
                 </div>
 
-                <!-- MENSAJE DE ALERTA (oculto por defecto) -->
                 <div id="alertMessage" class="alert-custom">
                     <i class="bi bi-exclamation-triangle-fill"></i>
                     <span id="alertText"></span>
@@ -371,7 +362,6 @@
                 
                 <form id="loginForm">
                     
-                    <!-- SELECTOR DE PROYECTOS -->
                     <div class="mb-3">
                         <label class="input-label" for="selectProyecto">
                             <i class="bi bi-building"></i> Proyecto Asignado
@@ -415,7 +405,6 @@
                         <a href="password.html" class="small">¿Olvidaste tu contraseña?</a>
                     </div>
                     
-                    <!-- BOTÓN INGRESAR -->
                     <button type="submit" class="btn btn-custom-primary w-100 mt-2" id="loginBtn">
                         <i class="bi bi-box-arrow-in-right me-2"></i> 
                         <span id="btnText">Ingresar</span>
@@ -434,7 +423,6 @@
             </div>
         </div>
 
-        <!-- === COLUMNA IMAGEN === -->
         <div class="image-column">
             <div class="image-content">
                 <i class="bi bi-sun-fill icon-large"></i>
@@ -460,9 +448,6 @@
 
     </div>
 
-    <!-- ============================================ -->
-    <!-- === FIREBASE - CONEXIÓN Y LÓGICA DE LOGIN === -->
-    <!-- ============================================ -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
@@ -471,7 +456,6 @@
             getDocs 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // [BLOQUE DE SEGURIDAD 1: LIMPIEZA DE SESIONES GLOBALES]
         localStorage.removeItem('usuarioAlfatek');
         localStorage.removeItem('usuario_logueado_email');
         localStorage.removeItem('id_usuario_actual');
@@ -500,7 +484,6 @@
         const alertMessage = document.getElementById('alertMessage');
         const alertText = document.getElementById('alertText');
 
-        // Función para cargar Proyectos Dinámicos al entrar a la página
         async function cargarProyectosDesdeFirestore() {
             try {
                 const proyectosRef = collection(db, "Proyectos");
@@ -530,7 +513,6 @@
             }
         }
 
-        // Llamada automática al cargar la web
         cargarProyectosDesdeFirestore();
 
         function mostrarAlerta(mensaje, tipo = 'error') {
@@ -562,8 +544,6 @@
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault(); 
             
-            // CORRECCIÓN CLAVE: NO convertir a minúsculas inmediatamente para respetar cómo se guardó en Firebase.
-            // La comparación la haremos de manera segura en JavaScript ignorando el Case Sensitivity.
             const correoIngresado = inputEmail.value.trim().toLowerCase();
             const password = inputPassword.value.trim();
             const proyectoSeleccionado = selectProyecto.value;
@@ -581,7 +561,6 @@
             setBotonCargando(true);
 
             try {
-                // Buscamos TODOS los usuarios web y filtramos ignorando mayúsculas/minúsculas.
                 const usuariosRef = collection(db, "Usuarios_web");
                 const querySnapshot = await getDocs(usuariosRef);
 
@@ -612,13 +591,9 @@
                     return;
                 }
 
-                // =========================================================================
-                // VALIDACIÓN ESTRICTA DE PERMISOS POR PROYECTO WEB
-                // =========================================================================
                 const rolDelUsuario = (usuarioEncontrado.rol || '').toLowerCase().trim();
                 const proyectoDelUsuario = (usuarioEncontrado.proyecto_asignado || '').trim();
 
-                // Si NO es administrador, debe coincidir obligatoriamente el proyecto
                 if (rolDelUsuario !== 'administrador') {
                     if (!proyectoDelUsuario || proyectoDelUsuario.toLowerCase() !== proyectoSeleccionado.toLowerCase()) {
                         const proyTxt = proyectoDelUsuario ? proyectoDelUsuario : "Ninguno";
@@ -628,7 +603,6 @@
                     }
                 }
 
-                // Empaquetar los datos de sesión (ahora incluimos el proyecto)
                 const datosUsuario = {
                     id: usuarioEncontrado.id,
                     Nombres: usuarioEncontrado.Nombres || usuarioEncontrado.nombres,
@@ -636,7 +610,7 @@
                     dni: usuarioEncontrado.DNI || usuarioEncontrado.dni,
                     correo: usuarioEncontrado.correo,
                     rol: usuarioEncontrado.rol,
-                    proyecto_asignado: proyectoSeleccionado // El proyecto validado
+                    proyecto_asignado: proyectoSeleccionado 
                 };
 
                 const recordar = document.getElementById('rememberMe').checked;
@@ -646,7 +620,6 @@
                     sessionStorage.setItem('usuarioAlfatek', JSON.stringify(datosUsuario));
                 }
 
-                // Inyección de variables clave globales
                 localStorage.setItem('usuario_logueado_email', usuarioEncontrado.correo);
                 localStorage.setItem('id_usuario_actual', usuarioEncontrado.id);
                 localStorage.setItem('proyecto_actual_web', proyectoSeleccionado); // FUNDAMENTAL PARA OTRAS PANTALLAS
