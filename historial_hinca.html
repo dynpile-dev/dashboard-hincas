@@ -12,7 +12,6 @@
     <link href="carpeta_del_proyecto/css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     
-    <!-- [INICIO: ESTILOS CSS PERSONALIZADOS] -->
     <style>
         :root {
             --color-primary: #0fb1a5;
@@ -23,12 +22,10 @@
 
         html { overflow-y: scroll; }
 
-        /* ANTIFANTASMAS: Ocultar enlaces de navegación por defecto hasta validar permisos */
         .nav-link-restringido {
             display: none !important;
         }
 
-        /* Diseño de Menú y Barra Superior */
         .bg-dark, .sb-topnav.navbar { background-color: var(--color-primary) !important; }
         .sb-sidenav-dark { background-color: #ffffff !important; border-right: 1px solid #e0e0e0; }
         .sb-sidenav-dark .sb-sidenav-menu-heading, .sb-sidenav-dark .sb-sidenav-footer { color: var(--color-secondary) !important; opacity: 0.8; border-top: 1px solid #f0f0f0; }
@@ -49,9 +46,6 @@
         .btn-primary { background-color: var(--color-primary) !important; border-color: var(--color-primary) !important; }
         .btn-primary:hover { background-color: var(--color-primary-hover) !important; border-color: var(--color-primary-hover) !important; }
 
-        /* ==========================================
-           ESTILOS ESPECÍFICOS DEL HISTORIAL
-           ========================================== */
         .search-card {
             background-color: #ffffff;
             border-radius: 12px;
@@ -70,7 +64,6 @@
             overflow: hidden;
         }
 
-        /* Línea de Tiempo Vertical */
         .timeline {
             position: relative;
             padding: 20px 0;
@@ -144,7 +137,6 @@
         .timeline-body li { padding: 8px 0; border-bottom: 1px dashed #e9ecef; }
         .timeline-body li:last-child { border-bottom: none; }
 
-        /* Colores de iconos en Timeline */
         .icon-success { border-color: #198754; color: #198754; }
         .icon-warning { border-color: #ffc107; color: #ffc107; }
         .icon-danger { border-color: #dc3545; color: #dc3545; }
@@ -155,7 +147,6 @@
         .icon-purple { border-color: #6f42c1; color: #6f42c1; }
         .icon-brown { border-color: #8b4513; color: #8b4513; }
 
-        /* Galería de imágenes en timeline */
         .evidencia-img {
             max-height: 120px;
             object-fit: cover;
@@ -169,16 +160,13 @@
             border-color: var(--color-primary);
         }
     </style>
-    <!-- [FIN: ESTILOS CSS PERSONALIZADOS] -->
 </head>
 <body class="sb-nav-fixed">
     
-    <!-- [INICIO: BARRA SUPERIOR] -->
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
         <a class="navbar-brand ps-3 fw-bold" href="index.html">ALFATEK Energy</a>
         <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
         
-        <!-- El ms-auto asegura que el menú de usuario se mantenga a la derecha -->
         <ul class="navbar-nav ms-auto me-3 me-lg-4">
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown"><i class="fas fa-user fa-fw"></i></a>
@@ -188,10 +176,8 @@
             </li>
         </ul>
     </nav>
-    <!-- [FIN: BARRA SUPERIOR] -->
 
     <div id="layoutSidenav">
-        <!-- [INICIO: MENÚ LATERAL ACTUALIZADO CON IDs Y CLASES ANTIFANTASMAS] -->
         <div id="layoutSidenav_nav">
             <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                 <div class="sb-sidenav-menu">
@@ -219,19 +205,16 @@
                     </div>
                 </div>
                 <div class="sb-sidenav-footer" id="sesionFooter">
-                    <!-- Contenido dinámico desde JS -->
                     <div class="small">Sesión iniciada como:</div>
                     Cargando...
                 </div>
             </nav>
         </div>
-        <!-- [FIN: MENÚ LATERAL] -->
 
         <div id="layoutSidenav_content">
             <main>
                 <div class="container-fluid px-4 pt-4 pb-5">
                     
-                    <!-- Cabecera -->
                     <div class="d-flex justify-content-between align-items-end mb-4">
                         <div>
                             <h2 class="text-secondary fw-bold mb-0" id="pageTitle">Historial de Hinca <span class="text-primary fs-4 ms-2">| Cargando...</span></h2>
@@ -239,7 +222,6 @@
                         </div>
                     </div>
 
-                    <!-- [INICIO: TARJETA DE BÚSQUEDA] -->
                     <div class="search-card">
                         <h5 class="fw-bold text-secondary mb-3"><i class="fas fa-search me-2 text-primary"></i>Buscar Hinca</h5>
                         <div class="row g-3 align-items-end">
@@ -256,7 +238,6 @@
                                 </select>
                             </div>
                             
-                            <!-- Desplegable dinámico para Tracker -->
                             <div class="col-md-2">
                                 <label class="form-label text-muted small fw-bold">Tracker</label>
                                 <select class="form-select border-primary shadow-sm" id="selBusquedaTracker">
@@ -264,7 +245,6 @@
                                 </select>
                             </div>
                             
-                            <!-- Desplegable estricto para Nodo/Hinca -->
                             <div class="col-md-3">
                                 <label class="form-label text-muted small fw-bold">Hinca</label>
                                 <select class="form-select border-primary shadow-sm" id="selBusquedaNodo">
@@ -296,12 +276,9 @@
                             </div>
                         </div>
                     </div>
-                    <!-- [FIN: TARJETA DE BÚSQUEDA] -->
 
-                    <!-- [INICIO: ÁREA DE RESULTADOS (OCULTA POR DEFECTO)] -->
                     <div id="resultadosContainer" class="d-none">
                         
-                        <!-- Encabezado del resultado -->
                         <div class="d-flex align-items-center mb-3 bg-white p-3 rounded shadow-sm border border-light">
                             <div class="me-4 pe-4 border-end">
                                 <h3 class="fw-bold text-primary mb-0" id="lblHincaEncontrada">Hinca --</h3>
@@ -312,25 +289,19 @@
                             </div>
                         </div>
 
-                        <!-- Línea de Tiempo del Historial -->
                         <div class="timeline-card p-4">
                             <h5 class="fw-bold text-secondary mb-4 border-bottom pb-2"><i class="fas fa-stream me-2 text-primary"></i>Trazabilidad de Eventos </h5>
                             
                             <ul class="timeline" id="timelineContenido">
-                                <!-- El contenido se inyectará aquí de forma dinámica -->
                             </ul>
                         </div>
                     </div>
-                    <!-- [FIN: ÁREA DE RESULTADOS] -->
 
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- ==========================================
-         MODAL DE ALERTA (ESTÉTICO)
-         ========================================== -->
     <div class="modal fade" id="modalAlertaEstetica" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
@@ -346,18 +317,13 @@
         </div>
     </div>
 
-    <!-- Scripts base -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="carpeta_del_proyecto/js/scripts.js"></script>
 
-    <!-- [INICIO: LÓGICA DE FIREBASE Y CONSTRUCCIÓN DE LÍNEA DE TIEMPO DINÁMICA] -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ============================================================================
-        // 1. SEGURIDAD Y LECTURA DE SESIÓN / PROYECTO ACTUAL
-        // ============================================================================
         const proyectoActual = localStorage.getItem('proyecto_actual_web');
         const userDataStr = localStorage.getItem('usuarioAlfatek') || sessionStorage.getItem('usuarioAlfatek');
 
@@ -367,7 +333,6 @@
 
         const userData = JSON.parse(userDataStr);
 
-        // Actualizar UI visual
         document.getElementById('pageTitle').innerHTML = `Historial de Hinca <span class="text-primary fs-4 ms-2">| ${proyectoActual}</span>`;
         
         document.getElementById('sesionFooter').innerHTML = `
@@ -388,10 +353,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
-        // ============================================================================
-        // CAPA DE SEGURIDAD VISUAL: MOSTRAR SOLO MÓDULOS PERMITIDOS (ANTIFANTASMA)
-        // ============================================================================
 
         const mapaModulosSeguridad = {
             "dashboard": "nav_dashboard",
@@ -432,7 +393,6 @@
 
             const cacheKey = `permisos_matriz_bd_${rolActivo}`;
 
-            // 2. Leemos la memoria rápida del navegador para EVITAR EL PARPADEO.
             const permisosCacheados = localStorage.getItem(cacheKey);
             if (permisosCacheados) {
                 const misPermisosLocal = JSON.parse(permisosCacheados);
@@ -440,7 +400,6 @@
                 auditarURL(misPermisosLocal);
             }
 
-            // 3. Consultamos silenciosamente a Firebase en segundo plano para actualizar si el Administrador hizo cambios hoy.
             try {
                 const docSnap = await getDoc(doc(db, "Configuracion", "AccesosRoles"));
                 if (docSnap.exists()) {
@@ -465,12 +424,10 @@
 
         aplicarPermisosMatriz();
 
-        // FUNCIÓN GLOBAL SEGURA PARA ABRIR IMÁGENES EN ALTA CALIDAD DESDE STORAGE
         window.abrirEvidencia = function(src) {
             window.open(src, '_blank');
         };
 
-        // FUNCIÓN PARA MOSTRAR MODAL ESTÉTICO (Reemplaza al alert nativo)
         function mostrarAlertaEstetica(mensaje) {
             document.getElementById('textoAlertaMensaje').textContent = mensaje;
             const modal = new bootstrap.Modal(document.getElementById('modalAlertaEstetica'));
@@ -485,7 +442,6 @@
             const selSeccion = document.getElementById('selBusquedaSeccion');
             const selTracker = document.getElementById('selBusquedaTracker');
 
-            // 1. CARGAR SUBCAMPOS AL INICIAR (FILTRADOS POR PROYECTO ACTUAL)
             try {
                 const qSubcampos = query(collection(db, "Subcampos"), where("proyecto_asignado", "==", proyectoActual));
                 const subcamposSnap = await getDocs(qSubcampos);
@@ -509,9 +465,6 @@
                     selSubcampo.innerHTML = '<option value="" disabled>No hay subcampos en este proyecto</option>';
                 }
                 
-                // =======================================================
-                // LÓGICA DE REDIRECCIÓN Y BÚSQUEDA AUTOMÁTICA DESDE REPORTES
-                // =======================================================
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('autoSearch') === 'true') {
                     const scParam = urlParams.get('sc');
@@ -538,9 +491,6 @@
                 selSubcampo.innerHTML = '<option value="" selected disabled>Error de conexión</option>';
             }
 
-            // =======================================================
-            // LÓGICA DE DESPLEGABLES DEPENDIENTES (SECCIONES Y TRACKERS)
-            // =======================================================
             function actualizarSeccionesDropdown() {
                 const scId = selSubcampo.value;
                 selSeccion.innerHTML = '<option value="" selected disabled>Seleccione...</option>';
@@ -634,9 +584,6 @@
                 }
             });
 
-            // =======================================================
-            // MOTOR DINÁMICO DE LÍNEA DE TIEMPO FRACCIONADA Y ORDENADA
-            // =======================================================
             function parseFecha(fechaStr, horaStr) {
                 if (!fechaStr || !horaStr || fechaStr.includes('--') || horaStr.includes('--')) return 0;
                 const pD = fechaStr.split('/');
@@ -732,9 +679,6 @@
                     buscarNodosRecursivo(data['3_datos_de_proceso'], "Datos_Proceso");
                 }
 
-                // =========================================================================
-                // 2) EXTRAER MODIFICACIONES WEB (NUEVO HISTORIAL)
-                // =========================================================================
                 let historialWebAgregado = false;
 
                 function procesarEventoWeb(modData) {
@@ -794,21 +738,18 @@
                     arrayEventos.push({ timestamp: tsValidacion, html: htmlValidacion });
                 }
 
-                // Procesar el nodo estructurado
                 if (data['5_historial_web'] && typeof data['5_historial_web'] === 'object') {
                     for (let modKey in data['5_historial_web']) {
                         procesarEventoWeb(data['5_historial_web'][modKey]);
                     }
                 }
 
-                // Procesar los nodos "sueltos" por el bug anterior (rescate de datos)
                 for (let key in data) {
                     if (key.startsWith('5_historial_web.Modificacion_')) {
                         procesarEventoWeb(data[key]);
                     }
                 }
 
-                // 3) FALLBACK LEGACY (Si no hay historial nuevo, usa el antiguo)
                 if (!historialWebAgregado && (data.aprobacion_coordinador || data.altura_diseno !== undefined || data.observacion)) {
                     let fechaValidacion = "--/--/----";
                     let horaValidacion = "--:--:--";
@@ -869,10 +810,8 @@
                     arrayEventos.push({ timestamp: tsValidacion, html: htmlValidacion });
                 }
 
-                // 4) ORDENAR CRONOLÓGICAMENTE Y CONSTRUIR HTML FINAL
                 if (arrayEventos.length > 0) {
                     
-                    // Orden de más antiguo a más reciente
                     arrayEventos.sort((a, b) => a.timestamp - b.timestamp);
                     
                     arrayEventos.forEach(ev => {
@@ -993,9 +932,6 @@
             }
         });
 
-        // ==========================================
-        // [INICIO: FUNCIÓN PARA CERRAR SESIÓN SEGURA]
-        // ==========================================
         window.cerrarSesionCompleta = function() {
             localStorage.removeItem('usuarioAlfatek');
             localStorage.removeItem('usuario_logueado_email');
@@ -1005,9 +941,7 @@
             
             window.location.href = 'login.html';
         };
-        // ==========================================
     </script>
-    <!-- [FIN: LÓGICA DE FIREBASE Y CONSTRUCCIÓN DE LÍNEA DE TIEMPO DINÁMICA] -->
 
 </body>
 </html>
