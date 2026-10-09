@@ -11,7 +11,6 @@
     <link href="carpeta_del_proyecto/css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     
-    <!-- [INICIO: ESTILOS CSS PERSONALIZADOS] -->
     <style>
         :root {
             --color-primary: #0fb1a5;
@@ -20,14 +19,10 @@
             --color-primary-light: rgba(15, 177, 165, 0.1);
         }
 
-        /* ANTIFANTASMAS: Ocultar enlaces de navegación por defecto hasta validar permisos */
         .nav-link-restringido {
             display: none !important;
         }
 
-        /* ==========================================
-           DISEÑO DE MENÚ Y BARRA SUPERIOR
-           ========================================== */
         .bg-dark, .sb-topnav.navbar { 
             background-color: var(--color-primary) !important; 
         }
@@ -92,9 +87,6 @@
             color: var(--color-primary-hover) !important;
         }
 
-        /* ==========================================
-           WIDGET DE IA (ASISTENTE ALFATEK)
-           ========================================== */
         .ai-chat-container {
             position: fixed;
             bottom: 25px;
@@ -256,9 +248,6 @@
             40% { transform: scale(1); }
         }
 
-        /* ==========================================
-           KPIS SUPERIORES (SCROLL HORIZONTAL)
-           ========================================== */
         .kpi-wrapper {
             display: flex;
             overflow-x: auto;
@@ -293,9 +282,6 @@
         .kpi-card.amarillo { border-left-color: #fabf8f; }
         .kpi-card.amarillo h3 { color: #fabf8f; }
 
-        /* ==========================================
-           GRÁFICOS DE DONA (DONUT CHARTS)
-           ========================================== */
         .chart-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -324,12 +310,11 @@
         }
         .chart-container {
             position: relative;
-            height: 200px; /* Asegura que el contenedor tenga altura */
+            height: 200px; 
             width: 100%;
             display: flex;
             justify-content: center;
         }
-        /* Fuerza a que el canvas ocupe todo su contenedor */
         .chart-container canvas {
             height: 100% !important;
             width: 100% !important;
@@ -356,16 +341,13 @@
             margin-right: 8px;
         }
     </style>
-    <!-- [FIN: ESTILOS CSS PERSONALIZADOS] -->
 </head>
 <body class="sb-nav-fixed">
     
-    <!-- [INICIO: BARRA SUPERIOR] -->
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
         <a class="navbar-brand ps-3 fw-bold" href="index.html">ALFATEK Energy</a>
         <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
         
-        <!-- El ms-auto asegura que el menú de usuario se mantenga a la derecha -->
         <ul class="navbar-nav ms-auto me-3 me-lg-4">
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown"><i class="fas fa-user fa-fw"></i></a>
@@ -375,10 +357,8 @@
             </li>
         </ul>
     </nav>
-    <!-- [FIN: BARRA SUPERIOR] -->
 
     <div id="layoutSidenav">
-        <!-- [INICIO: MENÚ LATERAL ACTUALIZADO CON IDs Y CLASES ANTIFANTASMAS] -->
         <div id="layoutSidenav_nav">
             <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                 <div class="sb-sidenav-menu">
@@ -405,19 +385,16 @@
                     </div>
                 </div>
                 <div class="sb-sidenav-footer" id="sesionFooter">
-                    <!-- Contenido dinámico desde JS -->
                     <div class="small">Sesión iniciada como:</div>
                     Cargando...
                 </div>
             </nav>
         </div>
-        <!-- [FIN: MENÚ LATERAL] -->
 
         <div id="layoutSidenav_content">
             <main>
                 <div class="container-fluid px-4 pt-4 pb-5">
                     
-                    <!-- [INICIO: CABECERA DEL DASHBOARD] -->
                     <div class="d-flex justify-content-between align-items-end mb-4">
                         <div>
                             <h2 class="text-secondary fw-bold mb-0" id="dashboardTitle">
@@ -431,16 +408,11 @@
                             <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Hincas en Total</span>
                         </div>
                     </div>
-                    <!-- [FIN: CABECERA DEL DASHBOARD] -->
 
-                    <!-- 1. KPIS OPERATIVOS (Scroll Horizontal) -->
                     <div class="kpi-wrapper" id="kpiContainer">
-                        <!-- Se llenan por JS con el nuevo cálculo estricto. -->
                     </div>
 
-                    <!-- 2. GRÁFICOS DE DONA POR SUBCAMPO -->
                     <div class="chart-grid" id="chartsContainer">
-                        <!-- Gráfico Proyecto Completo (Movido el canvas fuera de JS) -->
                         <div class="donut-card">
                             <div class="donut-card-title"><i class="fas fa-chart-pie me-2 text-primary"></i>Proyecto completo</div>
                             <div class="donut-card-subtitle" id="sub_total_proyecto">Cargando hincas...</div>
@@ -449,7 +421,6 @@
                             </div>
                             <div class="chart-legend" id="legendProyecto"></div>
                         </div>
-                        <!-- Los gráficos individuales se inyectan por JS -->
                     </div>
 
                 </div>
@@ -457,9 +428,6 @@
         </div>
     </div>
 
-    <!-- ==========================================
-     WIDGET DE IA (ASISTENTE ALFATEK)
-     ========================================== -->
     <div class="ai-chat-container">
         <div class="ai-chat-window" id="aiChatWindow">
             <div class="ai-chat-header">
@@ -489,12 +457,10 @@
         </button>
     </div>
 
-    <!-- Scripts base -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="carpeta_del_proyecto/js/scripts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Script del Chatbot de IA -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const chatBtn = document.getElementById('aiChatBtn');
@@ -541,9 +507,6 @@
                 if (e.key === 'Enter') sendMessage();
             });
 
-            // ==========================================
-            // CEREBRO DE LA IA - LÓGICA OPERATIVA DE LOS 12 PROCESOS
-            // ==========================================
             function generarRespuestaSimulada(mensaje) {
                 const txt = mensaje.toLowerCase();
 
@@ -652,14 +615,10 @@
         });
     </script>
 
-    <!-- [INICIO: LÓGICA DE FIREBASE Y CÁLCULO DE KPIS FILTRADOS] -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ============================================================================
-        // 1. SEGURIDAD Y LECTURA DE SESIÓN / PROYECTO ACTUAL
-        // ============================================================================
         const proyectoActual = localStorage.getItem('proyecto_actual_web');
         const userDataStr = localStorage.getItem('usuarioAlfatek') || sessionStorage.getItem('usuarioAlfatek');
 
@@ -669,7 +628,6 @@
 
         const userData = JSON.parse(userDataStr);
 
-        // Actualizar UI con los datos de sesión y proyecto
         document.getElementById('dashboardTitle').innerHTML = `Dashboard Operativo <span class="text-primary fs-4 ms-2">| ${proyectoActual}</span>`;
         document.getElementById('sesionFooter').innerHTML = `
             <div class="small">Sesión iniciada como:</div>
@@ -690,9 +648,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ============================================================================
-        // CAPA DE SEGURIDAD VISUAL: INSTANTÁNEA (SIN EFECTO FANTASMA)
-        // ============================================================================
         const mapaModulosSeguridad = {
             "dashboard": "nav_dashboard",
             "creacion_subcampos": "nav_creacion_subcampos",
@@ -761,9 +716,6 @@
         }
         aplicarPermisosMatriz();
 
-        // ============================================================================
-        // COLORES EXACTOS PARA EL GRÁFICO CIRCULAR
-        // ============================================================================
         const COLORS = {
             TERMINADO: '#198754',          // Verde
             POT_CUMPLE: '#0d6efd',         // Azul
@@ -782,7 +734,6 @@
             OTROS: 'Otros Procesos'
         };
 
-        // PARSEADOR ESTRICTO DE FECHAS (Soluciona el problema de formato DD/MM/YYYY)
         function parsearFechaEstricta(fechaStr, horaStr) {
             try {
                 if (!fechaStr || !horaStr) return 0;
@@ -807,9 +758,6 @@
 
         document.addEventListener("DOMContentLoaded", async function() {
             try {
-                // ============================================================================
-                // 2. DESCARGA DE DATOS FILTRADOS Y EXTRACCIÓN DE REGLAS DE NEGOCIO
-                // ============================================================================
                 
                 const qHincas = query(collection(db, "ControlHincas"), where("1_datos_previos.1_proyecto", "==", proyectoActual));
 
@@ -821,17 +769,14 @@
                 let subcamposMap = {};
                 let statsGlobales = { 
                     totalHincas: 0, 
-                    // Métricas Acumulativas Históricas (Nunca restan)
                     extraccionesAcumuladas: 0,
                     mecanizadosAcumulados: 0,
                     predrillingAcumulados: 0,
                     volConcretoTotal: 0,
                     desperdicioAceroTotal: 0,
-                    // Estados Actuales Temporales (Mutuamente excluyentes)
                     estados: { TERMINADO:0, POT_CUMPLE:0, POT_NO_CUMPLE:0, REVIRADO:0, APLOMES:0, OTROS:0 } 
                 };
                 
-                // Mapear Subcampos
                 subcamposSnap.forEach(doc => {
                     const sc = doc.data();
                     const nombreProySc = sc.proyecto || sc.nombre_proyecto || sc.proyecto_asignado || '';
@@ -857,7 +802,6 @@
 
                 document.getElementById('topTotalHincas').textContent = statsGlobales.totalHincas;
 
-                // Clasificar Hincas y Calcular Métricas
                 hincasSnap.forEach(doc => {
                     const h = doc.data();
                     let idSubcampo = h['1_datos_previos']?.['4_subcampo'];
@@ -873,7 +817,6 @@
 
                     if (h['3_datos_de_proceso']) {
                         
-                        // 1. INFERENCIA ESTRUCTURAL DE EXTRACCIONES (A prueba de balas)
                         let maxIntento = 1;
                         for (const keyProceso of Object.keys(h['3_datos_de_proceso'])) {
                             if (keyProceso.includes('_intento_')) {
@@ -888,24 +831,19 @@
                                 } catch (e) {}
                             }
                         }
-                        // La cantidad de extracciones inferida
                         let extraccionesInferidas = maxIntento - 1;
 
-                        // Evaluamos nodo por nodo
                         for (const [keyProceso, valProceso] of Object.entries(h['3_datos_de_proceso'])) {
                             let keyLower = keyProceso.toLowerCase();
                             
-                            // Ignorar las variables booleanas sueltas de firebase
                             if (typeof valProceso !== 'object' || valProceso === null) {
                                 continue;
                             }
 
-                            // A. Acumular Extracciones físicas
                             if (keyLower.includes('extraccion')) {
                                 extraccionesLocales++;
                             }
 
-                            // B. Acumular Mecanizados reales
                             if (keyLower.startsWith('fase_1_mecanizado_intento_') || 
                                 keyLower.startsWith('fase_1_mecanizado_pot_cumple_intento_') || 
                                 keyLower.startsWith('fase_5_mecanizado_pot_no_cumple_intento_') || 
@@ -913,22 +851,18 @@
                                 mecanizadosLocales++;
                             }
 
-                            // C. Acumular Predrilling
                             if (keyLower.includes('ciclos_predrilling')) {
                                 predrillingLocales += Object.keys(valProceso).length;
                             } else if (keyLower.includes('predrilling') && !keyLower.includes('ciclos')) {
                                 predrillingLocales++;
                             }
                             
-                            // D. Procesar Tiempos y Cifras 
                             if (!keyLower.includes('ciclos_predrilling')) {
                                 
-                                // Extraer el timestamp estricto
                                 let fReg = valProceso['01_fecha_registro'] || valProceso['1_fecha_registro'] || valProceso['fecha_registro'];
                                 let hReg = valProceso['02_hora_registro'] || valProceso['2_hora_registro'] || valProceso['hora_registro'];
                                 let ts = parsearFechaEstricta(fReg, hReg);
 
-                                // Actualización cronológica del estado actual
                                 if (ts > mayorTimestamp) {
                                     mayorTimestamp = ts;
                                     
@@ -939,7 +873,6 @@
                                     else estadoMasReciente = "OTROS"; 
                                 }
 
-                                // Sumar volumen y desperdicio
                                 for (const [k, v] of Object.entries(valProceso)) {
                                     let lk = k.toLowerCase();
                                     
@@ -957,7 +890,6 @@
                             }
                         }
                         
-                        // Nos quedamos con el valor más alto entre extracciones físicas vs inferidas
                         extraccionesLocales = Math.max(extraccionesLocales, extraccionesInferidas);
                     }
 
@@ -967,16 +899,12 @@
                     statsGlobales.volConcretoTotal += volumenLocal;
                     statsGlobales.desperdicioAceroTotal += desperdicioLocal;
 
-                    // =========================================================================
-                    // B. CLASIFICACIÓN DE ESTADO ACTUAL (Mutuamente excluyente)
-                    // =========================================================================
                     let claseAsignada = estadoMasReciente;
                     
                     if (h.aprobacion_coordinador === "APROBADO") {
                         claseAsignada = "TERMINADO";
                     } 
 
-                    // IMPORTANTE: Aseguramos que la clase impacte TODAS las estadísticas
                     if (statsGlobales.estados[claseAsignada] !== undefined) {
                         statsGlobales.estados[claseAsignada]++;
                     }
@@ -985,7 +913,6 @@
                     }
                 });
 
-                // ACTUALIZAR KPIS SUPERIORES
                 document.getElementById('kpiContainer').innerHTML = `
                     <div class="kpi-card verde"><h3>${statsGlobales.estados.TERMINADO}</h3><span>Hincados Terminados</span></div>
 
@@ -1003,7 +930,6 @@
                     <div class="kpi-card" style="border-left-color: #d35400"><h3>${statsGlobales.desperdicioAceroTotal.toFixed(2)} m</h3><span>Desperdicio Acero</span></div>
                 `;
 
-                // GENERAR GRÁFICOS (con un ligero delay para que el HTML se estabilice)
                 setTimeout(() => {
                     document.getElementById('sub_total_proyecto').textContent = `${statsGlobales.totalHincas} hincas totales estimadas`;
                     crearGraficoDona('chartProyecto', 'legendProyecto', statsGlobales.estados, statsGlobales.totalHincas);
@@ -1026,7 +952,6 @@
                         chartsContainer.insertAdjacentHTML('beforeend', cardHtml);
                     });
 
-                    // Dibujar el canvas después de que el contenedor exista físicamente en el DOM
                     setTimeout(() => {
                         Object.values(subcamposMap).forEach(scMap => {
                             const canvasId = `chart_sc_${scMap.data.id_subcampo}`;
