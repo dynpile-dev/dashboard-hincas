@@ -10,7 +10,6 @@
     <link href="carpeta_del_proyecto/css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     
-    <!-- [INICIO: ESTILOS CSS PERSONALIZADOS] -->
     <style>
         :root {
             --color-primary: #0fb1a5;
@@ -20,14 +19,10 @@
 
         html { overflow-y: scroll; }
 
-        /* ANTIFANTASMAS: Ocultar enlaces de navegación por defecto hasta validar permisos */
         .nav-link-restringido {
             display: none !important;
         }
 
-        /* ==========================================
-           DISEÑO DE MENÚ Y BARRA SUPERIOR
-           ========================================== */
         .bg-dark, .sb-topnav.navbar { background-color: var(--color-primary) !important; }
         .sb-sidenav-dark { background-color: #ffffff !important; border-right: 1px solid #e0e0e0; }
         .sb-sidenav-dark .sb-sidenav-menu-heading, .sb-sidenav-dark .sb-sidenav-footer { color: var(--color-secondary) !important; opacity: 0.8; border-top: 1px solid #f0f0f0; }
@@ -43,9 +38,6 @@
         .btn-primary { background-color: var(--color-primary) !important; border-color: var(--color-primary) !important; }
         .btn-primary:hover { background-color: var(--color-primary-hover) !important; border-color: var(--color-primary-hover) !important; }
 
-        /* ==========================================
-           ESTILOS DE LAS TARJETAS Y TABLA
-           ========================================== */
         .card-registro {
             border: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -94,14 +86,12 @@
 
         .table-loader { padding: 40px 0; text-align: center; }
         
-        /* ESTILOS DE LA MATRIZ DE PERMISOS */
         .table-permisos th { font-size: 0.85rem; font-weight: 700; color: var(--color-secondary); background-color: #f8f9fa; vertical-align: middle; }
         .table-permisos td { vertical-align: middle; padding: 12px; border-bottom: 1px solid #f0f0f0; }
         .table-permisos .form-switch { display: flex; justify-content: center; margin: 0; }
         .table-permisos .form-check-input { cursor: pointer; width: 2.5em; height: 1.25em; }
         .table-permisos .form-check-input:checked { background-color: var(--color-primary); border-color: var(--color-primary); }
         
-        /* MODAL CONFIRMACION */
         #modalConfirmacion .modal-content {
             box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
             border: 1px solid #ced4da !important;
@@ -115,7 +105,6 @@
             text-shadow: 0 2px 5px rgba(255, 193, 7, 0.3);
         }
 
-        /* VISTA PREVIA FIRMA */
         .img-firma-preview {
             max-width: 150px;
             max-height: 50px;
@@ -126,7 +115,6 @@
             background: #fff;
         }
     </style>
-    <!-- [FIN: ESTILOS CSS PERSONALIZADOS] -->
 </head>
 <body class="sb-nav-fixed">
     
@@ -134,7 +122,6 @@
         <a class="navbar-brand ps-3 fw-bold" href="index.html">ALFATEK Energy</a>
         <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
         
-        <!-- El ms-auto asegura que el menú de usuario se mantenga a la derecha -->
         <ul class="navbar-nav ms-auto me-3 me-lg-4">
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown"><i class="fas fa-user fa-fw"></i></a>
@@ -146,7 +133,6 @@
     </nav>
 
     <div id="layoutSidenav">
-        <!-- [INICIO: MENÚ LATERAL ACTUALIZADO CON IDs Y CLASES ANTIFANTASMAS] -->
         <div id="layoutSidenav_nav">
             <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                 <div class="sb-sidenav-menu">
@@ -173,13 +159,11 @@
                     </div>
                 </div>
                 <div class="sb-sidenav-footer" id="sesionFooter">
-                    <!-- Contenido dinámico desde JS -->
                     <div class="small">Sesión iniciada como:</div>
                     Cargando...
                 </div>
             </nav>
         </div>
-        <!-- [FIN: MENÚ LATERAL] -->
 
         <div id="layoutSidenav_content">
             <main>
@@ -216,7 +200,6 @@
                         </div>
                     </div>
 
-                    <!-- [INICIO: MATRIZ DE ACCESOS POR ROL] -->
                     <div class="card card-registro">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5><i class="fas fa-user-shield me-2"></i>Habilitación de Interfaces por Cargo</h5>
@@ -245,9 +228,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- [FIN: MATRIZ DE ACCESOS POR ROL] -->
 
-                    <!-- [INICIO: TABLA DE FIRMAS] -->
                     <div class="card card-registro">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5><i class="fas fa-file-signature me-2"></i>Firmas de Aprobación para Reportes</h5>
@@ -283,9 +264,6 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         MODAL CREAR/EDITAR USUARIO
-         ========================================== -->
     <div class="modal fade" id="usuarioModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow">
@@ -336,7 +314,6 @@
                             </div>
                         </div>
 
-                        <!-- [NUEVO] SELECTOR DE PROYECTO -->
                         <div class="row mb-3">
                             <div class="col-md-12">
                                 <label class="form-label text-secondary fw-bold small">Proyecto Asignado *</label>
@@ -364,9 +341,6 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         MODAL CREAR FIRMA
-         ========================================== -->
     <div class="modal fade" id="firmaModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -397,9 +371,6 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         MODAL DE CONFIRMACIÓN (ESTÉTICO)
-         ========================================== -->
     <div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -416,22 +387,15 @@
         </div>
     </div>
 
-    <!-- Scripts Base -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="carpeta_del_proyecto/js/scripts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
 
-    <!-- ==========================================
-         LÓGICA FIREBASE (CRUD PURO + FIREBASE STORAGE)
-         ========================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        // ============================================================================
-        // 1. SEGURIDAD Y LECTURA DE SESIÓN / PROYECTO ACTUAL
-        // ============================================================================
         const userDataStr = localStorage.getItem('usuarioAlfatek') || sessionStorage.getItem('usuarioAlfatek');
 
         if (!userDataStr) {
@@ -440,7 +404,6 @@
 
         const userData = JSON.parse(userDataStr);
 
-        // Actualizar UI visual del Footer dinámicamente
         document.getElementById('sesionFooter').innerHTML = `
             <div class="small">Sesión iniciada como:</div>
             <strong style="color:var(--color-primary);">${userData.Nombres}</strong><br>
@@ -459,10 +422,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app); 
-
-        // ============================================================================
-        // [NUEVO] CAPA DE SEGURIDAD VISUAL: MOSTRAR SOLO MÓDULOS PERMITIDOS (ANTIFANTASMA)
-        // ============================================================================
 
         const mapaModulosSeguridad = {
             "dashboard": "nav_dashboard",
@@ -495,7 +454,6 @@
         async function aplicarPermisosMatriz() {
             const rolActivo = userData.rol ? userData.rol.toLowerCase() : "supervisor";
             
-            // 1. Si es administrador, tiene acceso total, encendemos todo instantáneamente.
             if (rolActivo === "administrador" || rolActivo === "admin") {
                 const permisosAdmin = { "dashboard": true, "creacion_subcampos": true, "hincas": true, "historial_hinca": true, "reportes": true, "configuracion": true };
                 encenderBotones(permisosAdmin);
@@ -504,7 +462,6 @@
 
             const cacheKey = `permisos_matriz_bd_${rolActivo}`;
 
-            // 2. Leemos la memoria rápida del navegador para EVITAR EL PARPADEO.
             const permisosCacheados = localStorage.getItem(cacheKey);
             if (permisosCacheados) {
                 const misPermisosLocal = JSON.parse(permisosCacheados);
@@ -512,7 +469,6 @@
                 auditarURL(misPermisosLocal);
             }
 
-            // 3. Consultamos silenciosamente a Firebase en segundo plano para actualizar si el Administrador hizo cambios hoy.
             try {
                 const docSnap = await getDoc(doc(db, "Configuracion", "AccesosRoles"));
                 if (docSnap.exists()) {
@@ -539,9 +495,7 @@
             }
         }
 
-        // Ejecutar inmediatamente al abrir la página
         aplicarPermisosMatriz();
-        // ============================================================================
 
 
         let dataTableInstance = null;
@@ -581,9 +535,6 @@
             cargarMatrizRoles(); 
             cargarBancoFirmas(); 
 
-            // ==========================================
-            // [NUEVO] CARGAR PROYECTOS EN EL SELECT
-            // ==========================================
             async function cargarProyectosParaModal() {
                 const selProyecto = document.getElementById('selProyecto');
                 try {
@@ -607,9 +558,6 @@
                 }
             }
 
-            // ==========================================
-            // [INICIO: LÓGICA DE FIRMAS DE APROBACIÓN]
-            // ==========================================
             document.getElementById('btnNuevaFirma').addEventListener('click', () => {
                 document.getElementById('formFirma').reset();
                 firmaModal.show();
@@ -790,11 +738,8 @@
                     tbody.innerHTML = `<tr><td colspan="5" class="text-danger py-4">Error conectando con la base de datos de firmas.</td></tr>`;
                 }
             }
-            // ==========================================
-            // [FIN: LÓGICA DE FIRMAS DE APROBACIÓN]
-            // ==========================================
 
-            // LOGICA: CRUD USUARIOS
+
             document.getElementById('btnNuevoUsuario').addEventListener('click', () => {
                 document.getElementById('formUsuario').reset();
                 document.getElementById('selProyecto').value = ""; // Limpiar proyecto
@@ -919,7 +864,6 @@
             });
         });
 
-        // RECONSTRUCCIÓN COMPLETA DE LA TABLA DE USUARIOS
         async function cargarUsuarios() {
             const loader = document.getElementById('tablaLoader');
             const container = document.getElementById('tablaContainer');
@@ -942,9 +886,6 @@
                         ? `<span class="badge-estado estado-activo"><span class="dot"></span>Activo</span>`
                         : `<span class="badge-estado estado-inactivo"><span class="dot"></span>Inactivo</span>`;
                     
-                    // ==========================================
-                    // ETIQUETAS DINÁMICAS PARA LOS NUEVOS ROLES
-                    // ==========================================
                     let claseCargo = "cargo-operador";
                     let nombreRolUI = user.rol;
 
@@ -964,7 +905,6 @@
                         nombreRolUI = "Operador"; 
                     }
 
-                    // [NUEVO] Mostrar el proyecto en la tabla
                     const proyectoVisual = user.proyecto_asignado ? user.proyecto_asignado : "Todos / No Asignado";
 
                     rowsHtml += `
@@ -1027,10 +967,6 @@
                 loader.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>Error al conectar con la base de datos de usuarios.</div>`;
             }
         }
-
-        // ==========================================
-        // [INICIO: LÓGICA DE MATRIZ DE ACCESOS POR ROL]
-        // ==========================================
         
         const MODULOS = {
             "dashboard": "Dashboard Operativo",
@@ -1109,11 +1045,7 @@
                 btnMatriz.innerHTML = '<i class="fas fa-save me-1"></i> Guardar Permisos';
             }
         });
-        // [FIN: LÓGICA DE MATRIZ DE ACCESOS POR ROL]
 
-        // ==========================================
-        // [INICIO: FUNCIÓN PARA CERRAR SESIÓN SEGURA]
-        // ==========================================
         window.cerrarSesionCompleta = function() {
             localStorage.removeItem('usuarioAlfatek');
             localStorage.removeItem('usuario_logueado_email');
@@ -1122,7 +1054,6 @@
             sessionStorage.clear();
             window.location.href = 'login.html';
         };
-        // ==========================================
 
     </script>
 </body>
