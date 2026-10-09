@@ -25,10 +25,6 @@
         .nav-link-restringido {
             display: none !important;
         }
-
-        /* ==========================================
-           CORRECCIÓN DE DISEÑO DE MENÚ (TURQUESA/PLOMO)
-           ========================================== */
         
         .bg-dark, .sb-topnav.navbar { 
             background-color: var(--color-primary) !important; 
@@ -75,9 +71,6 @@
         .sb-topnav .navbar-nav .nav-link:hover { color: #ffffff !important; }
         .sb-topnav .navbar-brand { color: #ffffff !important; }
 
-        /* ==========================================
-           MATRIZ DE SUBCAMPOS (6x5)
-           ========================================== */
         .matrix-wrapper {
             background-color: var(--color-primary);
             border-radius: 12px;
@@ -173,9 +166,6 @@
         }
         .matrix-loader.d-none { display: none !important; }
 
-        /* ==========================================
-           PANEL DE CREACIÓN
-           ========================================== */
         .creation-panel {
             background-color: #ffffff;
             border-radius: 12px;
@@ -394,7 +384,6 @@
         </div>
     </div>
 
-    <!-- MODAL PARA DETALLE -->
     <div class="modal fade" id="hincaModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -428,7 +417,6 @@
         </div>
     </div>
 
-    <!-- [NUEVO] MODAL DE CONFIRMACIÓN DE ELIMINACIÓN -->
     <div class="modal fade" id="modalConfirmDelete" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0">
@@ -454,9 +442,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, deleteDoc, getDocs, collection, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ============================================================================
-        // 1. SEGURIDAD Y LECTURA DE SESIÓN / PROYECTO ACTUAL
-        // ============================================================================
         const proyectoActual = localStorage.getItem('proyecto_actual_web');
         const userDataStr = localStorage.getItem('usuarioAlfatek') || sessionStorage.getItem('usuarioAlfatek');
 
@@ -466,7 +451,6 @@
 
         const userData = JSON.parse(userDataStr);
 
-        // Actualizar UI visual
         document.getElementById('pageTitle').innerHTML = `Creación de Subcampos <span class="text-primary fs-4 ms-2">| ${proyectoActual}</span>`;
         document.getElementById('matrixTitle').innerHTML = `<i class="fas fa-th me-2"></i> Matriz 6x5 · ${proyectoActual}`;
         
@@ -490,9 +474,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ============================================================================
-        // CAPA DE SEGURIDAD VISUAL
-        // ============================================================================
         const mapaModulosSeguridad = {
             "dashboard": "nav_dashboard",
             "creacion_subcampos": "nav_creacion_subcampos",
@@ -562,8 +543,6 @@
 
         aplicarPermisosMatriz();
 
-        // ============================================================================
-
         document.addEventListener("DOMContentLoaded", async function() {
             const grid = document.getElementById('matrixGrid');
             const loader = document.getElementById('matrixLoader');
@@ -574,7 +553,6 @@
             let subcampoEnEdicion = null; 
 
             try {
-                // FILTRAMOS ESTRICTAMENTE LOS SUBCAMPOS DE ESTE PROYECTO
                 const qSubcampos = query(collection(db, "Subcampos"), where("proyecto_asignado", "==", proyectoActual));
                 const querySnapshot = await getDocs(qSubcampos);
                 
@@ -676,19 +654,16 @@
                 return newCell;
             }
 
-            // Rellena el panel con los datos de Firebase para editar
             function prepararEdicion(dataCompleta) {
                 subcampoEnEdicion = dataCompleta; 
                 
                 document.getElementById('panelTitle').textContent = `Editar Subcampo #${dataCompleta.id_subcampo}`;
                 document.getElementById('btnCrearSubcampo').textContent = 'Guardar Cambios';
                 
-                // [MODIFICACIÓN] Cambiar botón Limpiar a Eliminar
                 const btnAccion = document.getElementById('btnAccionSecundaria');
                 btnAccion.textContent = 'Eliminar Subcampo';
                 btnAccion.className = 'btn btn-panel-delete px-4';
                 
-                // Mostrar alerta de peligro si ya hay progreso
                 const alertaExistente = document.getElementById('alertDatosExistentes');
                 if (dataCompleta.progreso_global && parseFloat(dataCompleta.progreso_global) > 0) {
                     alertaExistente.style.display = 'flex';
@@ -761,7 +736,6 @@
                 });
             });
 
-            // Lógica de Cálculo Exacto (Trackers x 17 Hincas)
             function calcularSuma() {
                 let totalTrackers = 0;
                 trackerInputs.forEach(input => {
@@ -769,7 +743,6 @@
                     if(!isNaN(num)) totalTrackers += num;
                 });
                 
-                // Multiplicamos por 17 para obtener el número real de hincas
                 const totalHincasReales = totalTrackers * 17;
                 txtTotalHincas.textContent = totalHincasReales;
             }
@@ -790,7 +763,6 @@
                 document.getElementById('btnCrearSubcampo').textContent = 'Crear Subcampo';
                 document.getElementById('alertDatosExistentes').style.display = 'none'; 
                 
-                // Restaurar botón secundario a "Limpiar"
                 const btnAccion = document.getElementById('btnAccionSecundaria');
                 btnAccion.textContent = 'Limpiar';
                 btnAccion.className = 'btn btn-panel-cancel px-4';
@@ -803,22 +775,16 @@
                 calcularSuma();
             }
 
-            // =========================================================================
-            // [NUEVO] LÓGICA DEL BOTÓN SECUNDARIO (LIMPIAR vs ELIMINAR)
-            // =========================================================================
             document.getElementById('btnAccionSecundaria').addEventListener('click', async () => {
-                // Si no estamos editando, funciona como un "Limpiar" normal
                 if (!subcampoEnEdicion) {
                     resetPanel();
                     return;
                 }
 
-                // SI ESTAMOS EDITANDO, FUNCIONA COMO "ELIMINAR"
                 const numSubcampo = subcampoEnEdicion.id_subcampo;
                 const docFirebaseID = `${proyectoActual.replace(/[^a-zA-Z0-9]/g, "_")}_SC_${numSubcampo}`;
 
                 try {
-                    // Consultamos Firebase para ver si hay hincas en este subcampo y proyecto
                     const qHincas = query(
                         collection(db, "ControlHincas"), 
                         where("1_datos_previos.1_proyecto", "==", proyectoActual),
@@ -828,7 +794,6 @@
                     const snapHincas = await getDocs(qHincas);
                     const countHincas = snapHincas.size;
                     
-                    // Preparamos el mensaje del modal
                     const modalBody = document.getElementById('modalDeleteBody');
                     if (countHincas > 0) {
                         modalBody.innerHTML = `
@@ -848,7 +813,6 @@
                     const deleteModal = new bootstrap.Modal(document.getElementById('modalConfirmDelete'));
                     deleteModal.show();
                     
-                    // Clonamos el botón de confirmación para evitar listeners duplicados
                     const btnConfirm = document.getElementById('btnConfirmDelete');
                     const newBtnConfirm = btnConfirm.cloneNode(true);
                     btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
@@ -858,7 +822,6 @@
                         newBtnConfirm.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Destruyendo...';
                         
                         try {
-                            // 1. ELIMINAR HINCAS (Si existen)
                             if (countHincas > 0) {
                                 const deletePromises = [];
                                 snapHincas.forEach(hincaDoc => {
@@ -867,17 +830,13 @@
                                 await Promise.all(deletePromises);
                             }
                             
-                            // 2. ELIMINAR SUBCAMPO
                             await deleteDoc(doc(db, "Subcampos", docFirebaseID));
                             
-                            // 3. ACTUALIZAR INTERFAZ GRÁFICA
                             const r = subcampoEnEdicion.fila_matriz;
                             const c = subcampoEnEdicion.columna_matriz;
                             
-                            // Lo sacamos de la memoria visual
                             activeCellsData = activeCellsData.filter(item => item.id !== parseInt(numSubcampo));
                             
-                            // Recreamos la celda vacía en la cuadrícula
                             const grid = document.getElementById('matrixGrid');
                             const oldCell = document.querySelector(`.grid-cell[data-row="${r}"][data-col="${c}"]`);
                             if (oldCell) {
@@ -911,7 +870,6 @@
                     mostrarAlerta("Error al verificar los datos del subcampo.", "danger");
                 }
             });
-            // =========================================================================
 
             const formCrear = document.getElementById('formCrearSubcampo');
             const btnSubmit = document.getElementById('btnCrearSubcampo');
