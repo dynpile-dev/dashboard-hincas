@@ -54,7 +54,6 @@
 
         .card-registro .card-header h5 { color: var(--color-secondary); font-weight: 700; margin: 0; font-size: 1.1rem; }
 
-        /* Tabla de usuarios (sin librería: búsqueda y paginación propias, sin flechas de orden) */
         .tabla-usuarios { width: 100%; margin-bottom: 0; }
         .tabla-usuarios > thead > tr > th { color: var(--color-secondary); font-weight: 600; font-size: 0.85rem; border-bottom: 2px solid #f0f0f0; background-color: #fafafa; padding: 12px; }
         .tabla-usuarios > tbody > tr > td { vertical-align: middle; font-size: 0.85rem; color: #444; border-bottom: 1px solid #f4f4f4; padding: 10px 12px; }
@@ -72,10 +71,8 @@
         .badge-cargo { padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize; }
         .cargo-administrador { background-color: rgba(15, 177, 165, 0.1); color: var(--color-primary-hover); border: 1px solid rgba(15, 177, 165, 0.3); }
         .cargo-supervisor { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; border: 1px solid rgba(13, 110, 253, 0.3); }
-        /* Nuevos Roles */
         .cargo-coordinador_cierre { background-color: rgba(111, 66, 193, 0.1); color: #6f42c1; border: 1px solid rgba(111, 66, 193, 0.3); }
         .cargo-gestion_calidad { background-color: rgba(244, 158, 11, 0.1); color: #f49e0b; border: 1px solid rgba(244, 158, 11, 0.3); }
-        /* Fallback Operador por si quedan en bd antigua */
         .cargo-operador { background-color: rgba(108, 117, 125, 0.1); color: #495057; border: 1px solid rgba(108, 117, 125, 0.3); }
 
         .badge-estado { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; }
@@ -187,7 +184,6 @@
 
                     <div id="alertFeedback" class="alert d-none" role="alert"></div>
 
-                    <!-- 1. TABLA DE USUARIOS (Arriba) -->
                     <div class="card card-registro">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5><i class="fas fa-users me-2"></i>Personal y Accesos</h5>
@@ -264,7 +260,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- [FIN: TABLA DE FIRMAS] -->
 
                 </div>
             </main>
@@ -506,7 +501,6 @@
 
         let usuariosCache = {};
 
-        // ===== Estado de la tabla de usuarios (búsqueda + paginación propias) =====
         let USUARIOS_POR_PAGINA = 10;
         let filasUsuarios = [];        // [{ html, texto }]
         let paginaActualUsuarios = 1;
@@ -835,7 +829,6 @@
             }
 
             document.getElementById('tablaContainer').addEventListener('click', async (e) => {
-                // Paginación
                 const btnPagina = e.target.closest('[data-pagina]');
                 if (btnPagina) {
                     e.preventDefault();
@@ -885,7 +878,6 @@
             });
         });
 
-        // Dibuja solo las filas de la página actual (según búsqueda) + info + paginación
         function renderTablaUsuarios() {
             const tbody = document.getElementById('tbodyUsuarios');
             const info = document.getElementById('infoUsuarios');
