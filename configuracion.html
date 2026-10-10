@@ -59,6 +59,7 @@
         .tabla-usuarios > thead > tr > th { color: var(--color-secondary); font-weight: 600; font-size: 0.85rem; border-bottom: 2px solid #f0f0f0; background-color: #fafafa; padding: 12px; }
         .tabla-usuarios > tbody > tr > td { vertical-align: middle; font-size: 0.85rem; color: #444; border-bottom: 1px solid #f4f4f4; padding: 10px 12px; }
         .buscador-usuarios { max-width: 320px; }
+        .selector-por-pagina { width: auto; display: inline-block; }
         .paginacion-usuarios { margin-bottom: 0; }
         .paginacion-usuarios .page-link { color: var(--color-primary); cursor: pointer; }
         .paginacion-usuarios .page-item.active .page-link { background-color: var(--color-primary); border-color: var(--color-primary); color: #fff; }
@@ -506,7 +507,7 @@
         let usuariosCache = {};
  
         // ===== Estado de la tabla de usuarios (búsqueda + paginación propias) =====
-        const USUARIOS_POR_PAGINA = 10;
+        let USUARIOS_POR_PAGINA = 10;
         let filasUsuarios = [];        // [{ html, texto }]
         let paginaActualUsuarios = 1;
         let filtroUsuarios = "";
@@ -992,11 +993,21 @@
                 });
  
                 container.innerHTML = `
-                    <div class="d-flex justify-content-end mb-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                        <div class="small text-muted">
+                            <select class="form-select form-select-sm selector-por-pagina me-1" id="selectorPorPagina">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                                <option value="20">20</option>
+                                <option value="25">25</option>
+                            </select>
+                            usuarios por página
+                        </div>
                         <input type="search" class="form-control form-control-sm buscador-usuarios" id="buscadorUsuarios" placeholder="Buscar usuario, DNI o cargo...">
                     </div>
                     <div class="table-responsive">
-                        <table id="tablaUsuarios" class="table table-hover tabla-usuarios">
+                        <table id="tablaUsuarios" class="table table-hover border tabla-usuarios">
                             <thead>
                                 <tr>
                                     <th>Usuario</th>
@@ -1019,6 +1030,14 @@
                 buscador.value = filtroUsuarios;
                 buscador.addEventListener('input', () => {
                     filtroUsuarios = buscador.value;
+                    paginaActualUsuarios = 1;
+                    renderTablaUsuarios();
+                });
+ 
+                const selectorPorPagina = document.getElementById('selectorPorPagina');
+                selectorPorPagina.value = String(USUARIOS_POR_PAGINA);
+                selectorPorPagina.addEventListener('change', () => {
+                    USUARIOS_POR_PAGINA = parseInt(selectorPorPagina.value, 10);
                     paginaActualUsuarios = 1;
                     renderTablaUsuarios();
                 });
