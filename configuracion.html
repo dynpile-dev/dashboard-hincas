@@ -4,25 +4,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>Configuración - Alfatek Energy</title>
-    
-    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+ 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="carpeta_del_proyecto/css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    
+ 
     <style>
         :root {
             --color-primary: #0fb1a5;
             --color-secondary: #575656;
             --color-primary-hover: #0c8a80;
         }
-
+ 
         html { overflow-y: scroll; }
-
+ 
         .nav-link-restringido {
             display: none !important;
         }
-
+ 
         .bg-dark, .sb-topnav.navbar { background-color: var(--color-primary) !important; }
         .sb-sidenav-dark { background-color: #ffffff !important; border-right: 1px solid #e0e0e0; }
         .sb-sidenav-dark .sb-sidenav-menu-heading, .sb-sidenav-dark .sb-sidenav-footer { color: var(--color-secondary) !important; opacity: 0.8; border-top: 1px solid #f0f0f0; }
@@ -37,7 +36,7 @@
         .sb-topnav .navbar-brand { color: #ffffff !important; }
         .btn-primary { background-color: var(--color-primary) !important; border-color: var(--color-primary) !important; }
         .btn-primary:hover { background-color: var(--color-primary-hover) !important; border-color: var(--color-primary-hover) !important; }
-
+ 
         .card-registro {
             border: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -45,23 +44,30 @@
             overflow: hidden;
             margin-bottom: 25px;
         }
-
+ 
         .card-registro .card-header {
             background-color: #ffffff;
             border-top: 5px solid var(--color-primary);
             border-bottom: 1px solid #f0f0f0;
             padding: 15px 20px;
         }
-        
+ 
         .card-registro .card-header h5 { color: var(--color-secondary); font-weight: 700; margin: 0; font-size: 1.1rem; }
-
-        .dataTable-table > thead > tr > th { color: var(--color-secondary); font-weight: 600; font-size: 0.85rem; border-bottom: 2px solid #f0f0f0; background-color: #fafafa; }
-        .dataTable-table > tbody > tr > td { vertical-align: middle; font-size: 0.85rem; color: #444; border-bottom: 1px solid #f4f4f4; }
-        
+ 
+        /* Tabla de usuarios (sin librería: búsqueda y paginación propias, sin flechas de orden) */
+        .tabla-usuarios { width: 100%; margin-bottom: 0; }
+        .tabla-usuarios > thead > tr > th { color: var(--color-secondary); font-weight: 600; font-size: 0.85rem; border-bottom: 2px solid #f0f0f0; background-color: #fafafa; padding: 12px; }
+        .tabla-usuarios > tbody > tr > td { vertical-align: middle; font-size: 0.85rem; color: #444; border-bottom: 1px solid #f4f4f4; padding: 10px 12px; }
+        .buscador-usuarios { max-width: 320px; }
+        .paginacion-usuarios { margin-bottom: 0; }
+        .paginacion-usuarios .page-link { color: var(--color-primary); cursor: pointer; }
+        .paginacion-usuarios .page-item.active .page-link { background-color: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+        .paginacion-usuarios .page-item.disabled .page-link { color: #bbb; cursor: default; }
+ 
         .user-name { font-weight: 700; color: var(--color-primary); font-size: 0.95rem; }
         .user-email { color: #888; font-size: 0.8rem; }
         .user-dni { color: var(--color-secondary); font-size: 0.75rem; font-weight: 600; }
-
+ 
         .badge-cargo { padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize; }
         .cargo-administrador { background-color: rgba(15, 177, 165, 0.1); color: var(--color-primary-hover); border: 1px solid rgba(15, 177, 165, 0.3); }
         .cargo-supervisor { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; border: 1px solid rgba(13, 110, 253, 0.3); }
@@ -70,41 +76,41 @@
         .cargo-gestion_calidad { background-color: rgba(244, 158, 11, 0.1); color: #f49e0b; border: 1px solid rgba(244, 158, 11, 0.3); }
         /* Fallback Operador por si quedan en bd antigua */
         .cargo-operador { background-color: rgba(108, 117, 125, 0.1); color: #495057; border: 1px solid rgba(108, 117, 125, 0.3); }
-
+ 
         .badge-estado { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; }
         .estado-activo { background-color: rgba(25, 135, 84, 0.1); color: #198754; }
         .estado-inactivo { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
         .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
         .estado-activo .dot { background-color: #198754; }
         .estado-inactivo .dot { background-color: #dc3545; }
-
+ 
         .btn-action { padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; margin-right: 5px; transition: all 0.2s; cursor: pointer; }
         .btn-editar { background-color: #f8f9fa; color: var(--color-secondary); border: 1px solid #dee2e6; }
         .btn-editar:hover { background-color: #e2e6ea; color: var(--color-primary); border-color: var(--color-primary); }
         .btn-eliminar { background-color: #f8f9fa; color: #dc3545; border: 1px solid #dee2e6; }
         .btn-eliminar:hover { background-color: #dc3545; color: white; border-color: #dc3545; }
-
+ 
         .table-loader { padding: 40px 0; text-align: center; }
-        
+ 
         .table-permisos th { font-size: 0.85rem; font-weight: 700; color: var(--color-secondary); background-color: #f8f9fa; vertical-align: middle; }
         .table-permisos td { vertical-align: middle; padding: 12px; border-bottom: 1px solid #f0f0f0; }
         .table-permisos .form-switch { display: flex; justify-content: center; margin: 0; }
         .table-permisos .form-check-input { cursor: pointer; width: 2.5em; height: 1.25em; }
         .table-permisos .form-check-input:checked { background-color: var(--color-primary); border-color: var(--color-primary); }
-        
+ 
         #modalConfirmacion .modal-content {
             box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
             border: 1px solid #ced4da !important;
             border-radius: 12px;
         }
-
+ 
         .modal-confirm-icon {
             font-size: 3.5rem;
             color: #ffc107;
             margin-bottom: 15px;
             text-shadow: 0 2px 5px rgba(255, 193, 7, 0.3);
         }
-
+ 
         .img-firma-preview {
             max-width: 150px;
             max-height: 50px;
@@ -117,11 +123,11 @@
     </style>
 </head>
 <body class="sb-nav-fixed">
-    
+ 
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
         <a class="navbar-brand ps-3 fw-bold" href="index.html">ALFATEK Energy</a>
         <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
-        
+ 
         <ul class="navbar-nav ms-auto me-3 me-lg-4">
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown"><i class="fas fa-user fa-fw"></i></a>
@@ -131,7 +137,7 @@
             </li>
         </ul>
     </nav>
-
+ 
     <div id="layoutSidenav">
         <div id="layoutSidenav_nav">
             <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
@@ -164,7 +170,7 @@
                 </div>
             </nav>
         </div>
-
+ 
         <div id="layoutSidenav_content">
             <main>
                 <div class="container-fluid px-4 pb-5">
@@ -177,9 +183,9 @@
                             </ol>
                         </div>
                     </div>
-
+ 
                     <div id="alertFeedback" class="alert d-none" role="alert"></div>
-
+ 
                     <!-- 1. TABLA DE USUARIOS (Arriba) -->
                     <div class="card card-registro">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -193,13 +199,13 @@
                                 <div class="spinner-border text-primary" role="status"></div>
                                 <div class="mt-2 text-muted">Cargando usuarios desde Firebase...</div>
                             </div>
-
+ 
                             <div class="p-3 d-none" id="tablaContainer">
                                 <!-- La tabla se reconstruye desde JS -->
                             </div>
                         </div>
                     </div>
-
+ 
                     <div class="card card-registro">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5><i class="fas fa-user-shield me-2"></i>Habilitación de Interfaces por Cargo</h5>
@@ -209,7 +215,7 @@
                         </div>
                         <div class="card-body p-4">
                             <p class="text-muted small mb-4">Active o desactive los módulos de la plataforma a los que tendrá acceso cada cargo de usuario. Los administradores tienen acceso total por defecto.</p>
-                            
+ 
                             <div class="table-responsive">
                                 <table class="table table-permisos border">
                                     <thead>
@@ -228,7 +234,7 @@
                             </div>
                         </div>
                     </div>
-
+ 
                     <div class="card card-registro">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5><i class="fas fa-file-signature me-2"></i>Firmas de Aprobación para Reportes</h5>
@@ -238,7 +244,7 @@
                         </div>
                         <div class="card-body p-4">
                             <p class="text-muted small mb-3">Solo la firma que marque como "Activa" se inyectará en los reportes Excel descargados. Si activa una, las demás se apagarán automáticamente.</p>
-                            
+ 
                             <div class="table-responsive">
                                 <table class="table table-hover border align-middle text-center">
                                     <thead class="table-light text-secondary">
@@ -258,12 +264,12 @@
                         </div>
                     </div>
                     <!-- [FIN: TABLA DE FIRMAS] -->
-
+ 
                 </div>
             </main>
         </div>
     </div>
-
+ 
     <div class="modal fade" id="usuarioModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow">
@@ -273,8 +279,8 @@
                 </div>
                 <div class="modal-body p-4">
                     <form id="formUsuario">
-                        <input type="hidden" id="editUserId" value=""> 
-                        
+                        <input type="hidden" id="editUserId" value="">
+ 
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label text-secondary fw-bold small">Nombres *</label>
@@ -285,7 +291,7 @@
                                 <input type="text" class="form-control" id="inpApellidos" placeholder="Ej: Hinojosa De La Cruz" required>
                             </div>
                         </div>
-                        
+ 
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label text-secondary fw-bold small">DNI/C.E *</label>
@@ -296,7 +302,7 @@
                                 <input type="email" class="form-control" id="inpCorreo" placeholder="admin@alfatek.com" required>
                             </div>
                         </div>
-
+ 
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label text-secondary fw-bold small">Contraseña *</label>
@@ -313,7 +319,7 @@
                                 </select>
                             </div>
                         </div>
-
+ 
                         <div class="row mb-3">
                             <div class="col-md-12">
                                 <label class="form-label text-secondary fw-bold small">Proyecto Asignado *</label>
@@ -323,7 +329,7 @@
                                 <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Si es Administrador, tendrá acceso a todos los proyectos de forma automática.</small>
                             </div>
                         </div>
-
+ 
                         <div class="mb-3 border-top pt-3 mt-4">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="switchEstado" checked style="cursor: pointer;">
@@ -340,7 +346,7 @@
             </div>
         </div>
     </div>
-
+ 
     <div class="modal fade" id="firmaModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -355,7 +361,7 @@
                             <input type="text" class="form-control" id="inpNombreFirma" placeholder="Ej: Ing. Marco Antonio Ruiz" required>
                             <small class="text-muted">Este nombre aparecerá en los reportes junto a la firma.</small>
                         </div>
-                        
+ 
                         <div class="mb-3 border-top pt-3">
                             <label class="form-label text-secondary fw-bold small">Cargar Imagen de Firma *</label>
                             <input class="form-control" type="file" id="inpArchivoFirma" accept="image/png, image/jpeg" required>
@@ -370,7 +376,7 @@
             </div>
         </div>
     </div>
-
+ 
     <div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -386,30 +392,29 @@
             </div>
         </div>
     </div>
-
+ 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="carpeta_del_proyecto/js/scripts.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
-
+ 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
+ 
         const userDataStr = localStorage.getItem('usuarioAlfatek') || sessionStorage.getItem('usuarioAlfatek');
-
+ 
         if (!userDataStr) {
             window.location.href = 'login.html'; // Patea al login si no hay sesión
         }
-
+ 
         const userData = JSON.parse(userDataStr);
-
+ 
         document.getElementById('sesionFooter').innerHTML = `
             <div class="small">Sesión iniciada como:</div>
             <strong style="color:var(--color-primary);">${userData.Nombres}</strong><br>
             <span class="small text-muted" style="text-transform: capitalize;">${(userData.rol || 'Usuario').replace('_', ' ')}</span>
         `;
-
+ 
         const firebaseConfig = {
             apiKey: "AIzaSyDg7Ter_I5ryqyhE_fN9DHsSOL_ftPy80c",
             authDomain: "proyectohinca-5ef9d.firebaseapp.com",
@@ -418,11 +423,11 @@
             messagingSenderId: "383985129091",
             appId: "1:383985129091:web:c87906eca43813ac6d2db6"
         };
-
+ 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const storage = getStorage(app); 
-
+        const storage = getStorage(app);
+ 
         const mapaModulosSeguridad = {
             "dashboard": "nav_dashboard",
             "creacion_subcampos": "nav_creacion_subcampos",
@@ -431,44 +436,44 @@
             "reportes": "nav_reportes",
             "configuracion": "nav_configuracion"
         };
-
+ 
         function encenderBotones(permisos) {
             for (const [keyModulo, idHTML] of Object.entries(mapaModulosSeguridad)) {
                 const navElement = document.getElementById(idHTML);
                 if (navElement && permisos[keyModulo] === true) {
-                    navElement.classList.remove('nav-link-restringido'); 
+                    navElement.classList.remove('nav-link-restringido');
                 }
             }
         }
-
+ 
         function auditarURL(permisos) {
             const paginaActual = window.location.pathname.split("/").pop();
             let moduloActualClave = Object.keys(mapaModulosSeguridad).find(key => mapaModulosSeguridad[key].includes(paginaActual.replace('.html', '')));
             if (!paginaActual || paginaActual === 'index.html') moduloActualClave = 'dashboard';
-            
+ 
             if (moduloActualClave && permisos[moduloActualClave] === false) {
-                window.location.href = "login.html"; 
+                window.location.href = "login.html";
             }
         }
-
+ 
         async function aplicarPermisosMatriz() {
             const rolActivo = userData.rol ? userData.rol.toLowerCase() : "supervisor";
-            
+ 
             if (rolActivo === "administrador" || rolActivo === "admin") {
                 const permisosAdmin = { "dashboard": true, "creacion_subcampos": true, "hincas": true, "historial_hinca": true, "reportes": true, "configuracion": true };
                 encenderBotones(permisosAdmin);
                 return;
             }
-
+ 
             const cacheKey = `permisos_matriz_bd_${rolActivo}`;
-
+ 
             const permisosCacheados = localStorage.getItem(cacheKey);
             if (permisosCacheados) {
                 const misPermisosLocal = JSON.parse(permisosCacheados);
                 encenderBotones(misPermisosLocal);
                 auditarURL(misPermisosLocal);
             }
-
+ 
             try {
                 const docSnap = await getDoc(doc(db, "Configuracion", "AccesosRoles"));
                 if (docSnap.exists()) {
@@ -476,7 +481,7 @@
                     if (misPermisosNube) {
                         // Guardamos para que el siguiente clic a otra pestaña sea instantáneo
                         localStorage.setItem(cacheKey, JSON.stringify(misPermisosNube));
-                        
+ 
                         // Si no teníamos memoria caché (es la primera vez que entra), lo aplicamos ahora.
                         if (!permisosCacheados) {
                             encenderBotones(misPermisosNube);
@@ -494,20 +499,25 @@
                 }
             }
         }
-
+ 
         aplicarPermisosMatriz();
-
-
-        let dataTableInstance = null;
-        let usuariosCache = {}; 
-        
+ 
+ 
+        let usuariosCache = {};
+ 
+        // ===== Estado de la tabla de usuarios (búsqueda + paginación propias) =====
+        const USUARIOS_POR_PAGINA = 10;
+        let filasUsuarios = [];        // [{ html, texto }]
+        let paginaActualUsuarios = 1;
+        let filtroUsuarios = "";
+ 
         const userModal = new bootstrap.Modal(document.getElementById('usuarioModal'));
         const firmaModal = new bootstrap.Modal(document.getElementById('firmaModal'));
         const modalConfirmacion = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
-        let confirmActionCallback = null; 
-
-        const ID_USUARIO_ACTUAL = localStorage.getItem('id_usuario_actual') || ""; 
-
+        let confirmActionCallback = null;
+ 
+        const ID_USUARIO_ACTUAL = localStorage.getItem('id_usuario_actual') || "";
+ 
         function mostrarAlerta(mensaje, tipo) {
             const alertFeedback = document.getElementById('alertFeedback');
             alertFeedback.innerHTML = mensaje;
@@ -515,34 +525,34 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(() => { alertFeedback.className = 'alert d-none'; }, 6000);
         }
-
+ 
         function pedirConfirmacion(mensaje, callback) {
             document.getElementById('textoConfirmacion').textContent = mensaje;
             confirmActionCallback = callback;
             modalConfirmacion.show();
         }
-
+ 
         document.getElementById('btnConfirmarAccion').addEventListener('click', () => {
             modalConfirmacion.hide();
             if (confirmActionCallback) {
                 confirmActionCallback();
             }
         });
-
+ 
         document.addEventListener("DOMContentLoaded", function() {
-            cargarProyectosParaModal(); 
+            cargarProyectosParaModal();
             cargarUsuarios();
-            cargarMatrizRoles(); 
-            cargarBancoFirmas(); 
-
+            cargarMatrizRoles();
+            cargarBancoFirmas();
+ 
             async function cargarProyectosParaModal() {
                 const selProyecto = document.getElementById('selProyecto');
                 try {
                     const proyectosRef = collection(db, "Proyectos");
                     const snapshot = await getDocs(proyectosRef);
-                    
+ 
                     selProyecto.innerHTML = '<option value="" disabled selected>Seleccione un proyecto...</option>';
-                    
+ 
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         if (data.estado !== "Finalizado") {
@@ -557,17 +567,17 @@
                     selProyecto.innerHTML = '<option value="" disabled selected>Error al cargar proyectos</option>';
                 }
             }
-
+ 
             document.getElementById('btnNuevaFirma').addEventListener('click', () => {
                 document.getElementById('formFirma').reset();
                 firmaModal.show();
             });
-
+ 
             document.getElementById('btnEjecutarFirma').addEventListener('click', async () => {
                 const nombreResp = document.getElementById('inpNombreFirma').value.trim();
                 const inputFile = document.getElementById('inpArchivoFirma');
                 const file = inputFile.files[0];
-
+ 
                 if (!nombreResp) {
                     mostrarAlerta("Debe ingresar el nombre del responsable.", "warning");
                     return;
@@ -576,20 +586,20 @@
                     mostrarAlerta("Debe seleccionar un archivo de imagen.", "warning");
                     return;
                 }
-
+ 
                 const btnSubmit = document.getElementById('btnEjecutarFirma');
                 btnSubmit.disabled = true;
                 btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Subiendo...';
-
+ 
                 try {
                     const timestamp = new Date().getTime();
-                    const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_"); 
+                    const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
                     const storagePath = `Firmas_Globales/firma_${timestamp}_${cleanName}`;
                     const storageRef = ref(storage, storagePath);
-                    
+ 
                     await uploadBytes(storageRef, file);
                     const downloadURL = await getDownloadURL(storageRef);
-
+ 
                     const firmasSnapshot = await getDocs(collection(db, "Firmas_Globales"));
                     let promesasApagar = [];
                     firmasSnapshot.forEach((docF) => {
@@ -598,20 +608,20 @@
                         }
                     });
                     await Promise.all(promesasApagar);
-
+ 
                     const nuevaFirmaRef = doc(collection(db, "Firmas_Globales"));
                     await setDoc(nuevaFirmaRef, {
                         nombre_responsable: nombreResp,
                         url_firma: downloadURL,
-                        storage_path: storagePath, 
+                        storage_path: storagePath,
                         fecha_registro: new Date().toLocaleDateString('es-ES'),
                         timestamp: timestamp,
-                        activa: true 
+                        activa: true
                     });
-
+ 
                     mostrarAlerta(`La firma de ${nombreResp} se registró y activó exitosamente.`, "success");
                     firmaModal.hide();
-                    cargarBancoFirmas(); 
+                    cargarBancoFirmas();
                 } catch (error) {
                     console.error("Error subiendo firma: ", error);
                     mostrarAlerta("Hubo un error al subir la firma. Inténtelo de nuevo.", "danger");
@@ -620,17 +630,17 @@
                     btnSubmit.innerHTML = 'Subir y Guardar';
                 }
             });
-
+ 
             document.getElementById('tbodyFirmas').addEventListener('click', async (e) => {
                 if (e.target.classList.contains('switch-firma')) {
                     const idFirmaClickeada = e.target.getAttribute('data-id');
                     const quiereActivar = e.target.checked;
-                    
+ 
                     if (quiereActivar) {
                         document.querySelectorAll('.switch-firma').forEach(switchInput => {
                             if (switchInput !== e.target) switchInput.checked = false;
                         });
-                        
+ 
                         try {
                             const firmasSnapshot = await getDocs(collection(db, "Firmas_Globales"));
                             let updates = [];
@@ -645,25 +655,25 @@
                         } catch (err) {
                             console.error("Error cambiando estado:", err);
                             mostrarAlerta("Error de conexión al cambiar la firma activa.", "danger");
-                            cargarBancoFirmas(); 
+                            cargarBancoFirmas();
                         }
                     } else {
-                        e.target.checked = true; 
+                        e.target.checked = true;
                         mostrarAlerta("Debe haber al menos una firma activa. Si desea cambiarla, simplemente active otra de la lista.", "warning");
                     }
                 }
-
+ 
                 const btnEliminar = e.target.closest('.btn-eliminar-firma');
                 if (btnEliminar) {
                     const id = btnEliminar.getAttribute('data-id');
                     const path = btnEliminar.getAttribute('data-path');
                     const isActiva = btnEliminar.getAttribute('data-activa') === 'true';
-
+ 
                     if (isActiva) {
                         mostrarAlerta("No puede eliminar la firma que está actualmente en uso. Active otra firma primero.", "danger");
                         return;
                     }
-
+ 
                     pedirConfirmacion("¿Desea eliminar permanentemente esta firma del sistema?", async () => {
                         try {
                             await deleteDoc(doc(db, "Firmas_Globales", id));
@@ -680,35 +690,35 @@
                     });
                 }
             });
-
+ 
             async function cargarBancoFirmas() {
                 const tbody = document.getElementById('tbodyFirmas');
                 try {
                     const firmasSnap = await getDocs(collection(db, "Firmas_Globales"));
                     let htmlFirmas = "";
-                    
+ 
                     let arrayFirmas = [];
                     firmasSnap.forEach(d => {
                         let data = d.data();
                         data.id = d.id;
                         arrayFirmas.push(data);
                     });
-
+ 
                     arrayFirmas.sort((a, b) => {
                         if(a.activa && !b.activa) return -1;
                         if(!a.activa && b.activa) return 1;
                         return b.timestamp - a.timestamp;
                     });
-
+ 
                     if (arrayFirmas.length === 0) {
                         tbody.innerHTML = `<tr><td colspan="5" class="text-muted py-4">No hay firmas registradas en el sistema.</td></tr>`;
                         return;
                     }
-
+ 
                     arrayFirmas.forEach(f => {
                         const checked = f.activa ? "checked" : "";
                         const txtEstado = f.activa ? "En Uso" : "Apagada";
-                        
+ 
                         htmlFirmas += `
                             <tr>
                                 <td class="text-start ps-3 fw-bold text-secondary">${f.nombre_responsable}</td>
@@ -730,43 +740,43 @@
                             </tr>
                         `;
                     });
-                    
+ 
                     tbody.innerHTML = htmlFirmas;
-
+ 
                 } catch(error) {
                     console.error("Error cargando tabla de firmas: ", error);
                     tbody.innerHTML = `<tr><td colspan="5" class="text-danger py-4">Error conectando con la base de datos de firmas.</td></tr>`;
                 }
             }
-
-
+ 
+ 
             document.getElementById('btnNuevoUsuario').addEventListener('click', () => {
                 document.getElementById('formUsuario').reset();
                 document.getElementById('selProyecto').value = ""; // Limpiar proyecto
-                document.getElementById('editUserId').value = ""; 
-                document.getElementById('inpDNI').readOnly = false; 
+                document.getElementById('editUserId').value = "";
+                document.getElementById('inpDNI').readOnly = false;
                 document.getElementById('modalUserTitle').innerHTML = '<i class="fas fa-user-plus me-2"></i>Registrar Nuevo Usuario';
                 userModal.show();
             });
-
+ 
             document.getElementById('btnGuardarUserModal').addEventListener('click', () => {
                 const form = document.getElementById('formUsuario');
                 if (!form.checkValidity()) {
                     form.reportValidity();
                     return;
                 }
-
+ 
                 const isActivo = document.getElementById('switchEstado').checked;
                 const idEdicion = document.getElementById('editUserId').value;
                 const nombreCompleto = document.getElementById('inpNombres').value + " " + document.getElementById('inpApellidos').value;
-
+ 
                 if (!isActivo) {
                     if (idEdicion && idEdicion === ID_USUARIO_ACTUAL) {
                         pedirConfirmacion('Usted está en esta cuenta, ¿está seguro que desea cerrarlo? No podrá volver a ingresar.', () => {
                             ejecutarGuardadoUsuario(true);
                         });
                         return;
-                    } 
+                    }
                     else if (idEdicion) {
                         pedirConfirmacion(`¿Está seguro que desea quitarle el acceso a ${nombreCompleto}?`, () => {
                             ejecutarGuardadoUsuario(false);
@@ -774,23 +784,23 @@
                         return;
                     }
                 }
-                
+ 
                 ejecutarGuardadoUsuario(false);
             });
-
+ 
             async function ejecutarGuardadoUsuario(forzarCierreSesion) {
                 const btnSubmit = document.getElementById('btnGuardarUserModal');
                 btnSubmit.disabled = true;
                 btnSubmit.textContent = "Guardando...";
-
+ 
                 const idEdicion = document.getElementById('editUserId').value;
-                let docId = idEdicion; 
-
+                let docId = idEdicion;
+ 
                 if (!docId) {
                     const nuevoDocRef = doc(collection(db, "Usuarios_web"));
-                    docId = nuevoDocRef.id; 
+                    docId = nuevoDocRef.id;
                 }
-
+ 
                 const userDataToSave = {
                     Nombres: document.getElementById('inpNombres').value,
                     Apellidos: document.getElementById('inpApellidos').value,
@@ -801,20 +811,20 @@
                     proyecto_asignado: document.getElementById('selProyecto').value, // [NUEVO] GUARDAR PROYECTO
                     activo: document.getElementById('switchEstado').checked
                 };
-
+ 
                 try {
                     await setDoc(doc(db, "Usuarios_web", docId), userDataToSave);
                     userModal.hide();
-                    
+ 
                     if (forzarCierreSesion) {
                         localStorage.removeItem('id_usuario_actual');
                         localStorage.removeItem('usuario_logueado');
                         window.location.href = 'login.html';
                         return;
                     }
-
+ 
                     mostrarAlerta(`Configuración de usuario guardada exitosamente.`, "success");
-                    cargarUsuarios(); 
+                    cargarUsuarios();
                 } catch (error) {
                     mostrarAlerta("Ocurrió un error al guardar usuario en Firebase.", "danger");
                 } finally {
@@ -822,40 +832,50 @@
                     btnSubmit.textContent = "Guardar";
                 }
             }
-
+ 
             document.getElementById('tablaContainer').addEventListener('click', async (e) => {
+                // Paginación
+                const btnPagina = e.target.closest('[data-pagina]');
+                if (btnPagina) {
+                    e.preventDefault();
+                    if (btnPagina.closest('.page-item').classList.contains('disabled')) return;
+                    paginaActualUsuarios = parseInt(btnPagina.getAttribute('data-pagina'), 10);
+                    renderTablaUsuarios();
+                    return;
+                }
+ 
                 const btnEdit = e.target.closest('.btn-editar');
                 const btnDelete = e.target.closest('.btn-eliminar');
-
+ 
                 if (btnEdit) {
                     const id = btnEdit.getAttribute('data-id');
                     const user = usuariosCache[id];
-                    
+ 
                     if (user) {
                         document.getElementById('inpNombres').value = user.Nombres;
                         document.getElementById('inpApellidos').value = user.Apellidos;
                         document.getElementById('inpDNI').value = user.DNI;
-                        document.getElementById('inpDNI').readOnly = true; 
+                        document.getElementById('inpDNI').readOnly = true;
                         document.getElementById('inpCorreo').value = user.correo;
                         document.getElementById('inpPassword').value = user.password;
                         document.getElementById('selRol').value = user.rol;
                         document.getElementById('selProyecto').value = user.proyecto_asignado || ""; // [NUEVO] POBLAR PROYECTO
                         document.getElementById('switchEstado').checked = user.activo;
-                        
-                        document.getElementById('editUserId').value = id; 
+ 
+                        document.getElementById('editUserId').value = id;
                         document.getElementById('modalUserTitle').innerHTML = '<i class="fas fa-user-edit me-2"></i>Editar Usuario';
-                        
+ 
                         userModal.show();
                     }
                 }
-
+ 
                 if (btnDelete) {
                     const id = btnDelete.getAttribute('data-id');
                     pedirConfirmacion("¿Está seguro que desea eliminar este usuario del sistema?", async () => {
                         try {
                             await deleteDoc(doc(db, "Usuarios_web", id));
                             mostrarAlerta("Usuario eliminado correctamente.", "success");
-                            cargarUsuarios(); 
+                            cargarUsuarios();
                         } catch (error) {
                             mostrarAlerta("Error al eliminar el usuario de la base de datos.", "danger");
                         }
@@ -863,34 +883,71 @@
                 }
             });
         });
-
+ 
+        // Dibuja solo las filas de la página actual (según búsqueda) + info + paginación
+        function renderTablaUsuarios() {
+            const tbody = document.getElementById('tbodyUsuarios');
+            const info = document.getElementById('infoUsuarios');
+            const pag = document.getElementById('paginacionUsuarios');
+            if (!tbody) return;
+ 
+            const f = filtroUsuarios.trim().toLowerCase();
+            const filtradas = f ? filasUsuarios.filter(r => r.texto.includes(f)) : filasUsuarios;
+            const total = filtradas.length;
+            const totalPaginas = Math.max(1, Math.ceil(total / USUARIOS_POR_PAGINA));
+            if (paginaActualUsuarios > totalPaginas) paginaActualUsuarios = totalPaginas;
+            if (paginaActualUsuarios < 1) paginaActualUsuarios = 1;
+ 
+            const inicio = (paginaActualUsuarios - 1) * USUARIOS_POR_PAGINA;
+            const visibles = filtradas.slice(inicio, inicio + USUARIOS_POR_PAGINA);
+ 
+            tbody.innerHTML = visibles.length
+                ? visibles.map(r => r.html).join('')
+                : `<tr><td colspan="5" class="text-center text-muted py-4">${f ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}</td></tr>`;
+ 
+            info.textContent = total
+                ? `Mostrando ${inicio + 1} a ${inicio + visibles.length} de ${total} usuarios`
+                : 'Mostrando 0 usuarios';
+ 
+            let html = '';
+            if (totalPaginas > 1) {
+                const p = paginaActualUsuarios;
+                html += `<li class="page-item ${p === 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-pagina="${p - 1}">&lsaquo;</a></li>`;
+                for (let i = 1; i <= totalPaginas; i++) {
+                    html += `<li class="page-item ${i === p ? 'active' : ''}"><a class="page-link" href="#" data-pagina="${i}">${i}</a></li>`;
+                }
+                html += `<li class="page-item ${p === totalPaginas ? 'disabled' : ''}"><a class="page-link" href="#" data-pagina="${p + 1}">&rsaquo;</a></li>`;
+            }
+            pag.innerHTML = html;
+        }
+ 
         async function cargarUsuarios() {
             const loader = document.getElementById('tablaLoader');
             const container = document.getElementById('tablaContainer');
-
+ 
             loader.classList.remove('d-none');
             container.classList.add('d-none');
-
+ 
             try {
                 const querySnapshot = await getDocs(collection(db, "Usuarios_web"));
-                let rowsHtml = '';
-                usuariosCache = {}; 
-
+                usuariosCache = {};
+                filasUsuarios = [];
+ 
                 querySnapshot.forEach((doc) => {
                     const user = doc.data();
-                    const docId = doc.id; 
-                    usuariosCache[docId] = user; 
-                    
+                    const docId = doc.id;
+                    usuariosCache[docId] = user;
+ 
                     const esActivo = user.activo;
-                    const badgeEstado = esActivo 
+                    const badgeEstado = esActivo
                         ? `<span class="badge-estado estado-activo"><span class="dot"></span>Activo</span>`
                         : `<span class="badge-estado estado-inactivo"><span class="dot"></span>Inactivo</span>`;
-                    
+ 
                     let claseCargo = "cargo-operador";
                     let nombreRolUI = user.rol;
-
+ 
                     if(user.rol === "administrador") {
-                        claseCargo = "cargo-administrador"; 
+                        claseCargo = "cargo-administrador";
                         nombreRolUI = "Administrador";
                     } else if(user.rol === "supervisor") {
                         claseCargo = "cargo-supervisor";
@@ -902,12 +959,12 @@
                         claseCargo = "cargo-gestion_calidad";
                         nombreRolUI = "Gestión de Calidad";
                     } else {
-                        nombreRolUI = "Operador"; 
+                        nombreRolUI = "Operador";
                     }
-
+ 
                     const proyectoVisual = user.proyecto_asignado ? user.proyecto_asignado : "Todos / No Asignado";
-
-                    rowsHtml += `
+ 
+                    const filaHtml = `
                         <tr>
                             <td>
                                 <div class="user-name">${user.Nombres} ${user.Apellidos}</div>
@@ -925,49 +982,58 @@
                             </td>
                         </tr>
                     `;
+ 
+                    const textoBusqueda = [
+                        user.Nombres, user.Apellidos, user.correo, user.DNI,
+                        nombreRolUI, proyectoVisual, esActivo ? "activo" : "inactivo"
+                    ].join(" ").toLowerCase();
+ 
+                    filasUsuarios.push({ html: filaHtml, texto: textoBusqueda });
                 });
-
-                if(dataTableInstance) {
-                    dataTableInstance.destroy();
-                    dataTableInstance = null;
-                }
-
+ 
                 container.innerHTML = `
-                    <table id="tablaUsuarios">
-                        <thead>
-                            <tr>
-                                <th>Usuario</th>
-                                <th>Cargo y Proyecto</th>
-                                <th>Estado en Web</th>
-                                <th>DNI / C.I</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyUsuarios">
-                            ${rowsHtml}
-                        </tbody>
-                    </table>
+                    <div class="d-flex justify-content-end mb-3">
+                        <input type="search" class="form-control form-control-sm buscador-usuarios" id="buscadorUsuarios" placeholder="Buscar usuario, DNI o cargo...">
+                    </div>
+                    <div class="table-responsive">
+                        <table id="tablaUsuarios" class="table table-hover tabla-usuarios">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Cargo y Proyecto</th>
+                                    <th>Estado en Web</th>
+                                    <th>DNI / C.I</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyUsuarios"></tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 gap-2">
+                        <div class="small text-muted" id="infoUsuarios"></div>
+                        <ul class="pagination pagination-sm paginacion-usuarios" id="paginacionUsuarios"></ul>
+                    </div>
                 `;
-
+ 
+                const buscador = document.getElementById('buscadorUsuarios');
+                buscador.value = filtroUsuarios;
+                buscador.addEventListener('input', () => {
+                    filtroUsuarios = buscador.value;
+                    paginaActualUsuarios = 1;
+                    renderTablaUsuarios();
+                });
+ 
                 loader.classList.add('d-none');
                 container.classList.remove('d-none');
-
-                const dataTableElem = document.getElementById('tablaUsuarios');
-                dataTableInstance = new simpleDatatables.DataTable(dataTableElem, {
-                    searchable: true,
-                    labels: {
-                        placeholder: "Buscar usuario, DNI o cargo...",
-                        perPage: "usuarios por página",
-                        noRows: "No hay usuarios registrados",
-                        info: "Mostrando {start} a {end} de {rows} usuarios"
-                    }
-                });
-
+ 
+                renderTablaUsuarios();
+ 
             } catch (error) {
+                console.error("Error cargando usuarios:", error);
                 loader.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>Error al conectar con la base de datos de usuarios.</div>`;
             }
         }
-        
+ 
         const MODULOS = {
             "dashboard": "Dashboard Operativo",
             "creacion_subcampos": "Creación de Subcampos",
@@ -976,36 +1042,36 @@
             "reportes": "Reportes y Descargas",
             "configuracion": "Configuración Global"
         };
-        
+ 
         const ROLES = ["administrador", "supervisor", "coordinador_cierre", "gestion_calidad"];
-
+ 
         const PERMISOS_DEFAULT = {
             administrador: { dashboard: true, creacion_subcampos: true, hincas: true, historial_hinca: true, reportes: true, configuracion: true },
             supervisor: { dashboard: true, creacion_subcampos: false, hincas: true, historial_hinca: true, reportes: true, configuracion: false },
             coordinador_cierre: { dashboard: true, creacion_subcampos: false, hincas: true, historial_hinca: true, reportes: true, configuracion: false },
             gestion_calidad: { dashboard: true, creacion_subcampos: false, hincas: true, historial_hinca: true, reportes: true, configuracion: false }
         };
-
+ 
         async function cargarMatrizRoles() {
             const tbodyMatriz = document.getElementById('tbodyMatriz');
             tbodyMatriz.innerHTML = `<tr><td colspan="5" class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary me-2"></span> Cargando permisos...</td></tr>`;
-            
+ 
             try {
                 const docSnap = await getDoc(doc(db, "Configuracion", "AccesosRoles"));
                 let permisos = docSnap.exists() ? docSnap.data() : PERMISOS_DEFAULT;
-                
+ 
                 let htmlRows = '';
                 for (const [keyModulo, nomModulo] of Object.entries(MODULOS)) {
                     htmlRows += `<tr><td class="text-start ps-4 fw-bold text-secondary">${nomModulo}</td>`;
-                    
+ 
                     ROLES.forEach(rol => {
                         const isChecked = permisos[rol] && permisos[rol][keyModulo] ? "checked" : "";
-                        const isDisabled = (rol === "administrador") ? "disabled" : ""; 
-                        
+                        const isDisabled = (rol === "administrador") ? "disabled" : "";
+ 
                         htmlRows += `
                             <td>
                                 <div class="form-check form-switch d-inline-block">
-                                    <input class="form-check-input check-permiso" type="checkbox" 
+                                    <input class="form-check-input check-permiso" type="checkbox"
                                         data-rol="${rol}" data-modulo="${keyModulo}" ${isChecked} ${isDisabled}>
                                 </div>
                             </td>
@@ -1013,27 +1079,27 @@
                     });
                     htmlRows += `</tr>`;
                 }
-                
+ 
                 tbodyMatriz.innerHTML = htmlRows;
             } catch(e) {
                 console.error("Error cargando permisos: ", e);
                 tbodyMatriz.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error conectando con la Base de Datos</td></tr>`;
             }
         }
-
+ 
         document.getElementById('btnGuardarMatriz').addEventListener('click', async () => {
             const btnMatriz = document.getElementById('btnGuardarMatriz');
             btnMatriz.disabled = true;
             btnMatriz.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
-
+ 
             let nuevosPermisos = { administrador: {}, supervisor: {}, coordinador_cierre: {}, gestion_calidad: {} };
-            
+ 
             document.querySelectorAll('.check-permiso').forEach(check => {
                 const rol = check.getAttribute('data-rol');
                 const modulo = check.getAttribute('data-modulo');
                 nuevosPermisos[rol][modulo] = check.checked;
             });
-
+ 
             try {
                 await setDoc(doc(db, "Configuracion", "AccesosRoles"), nuevosPermisos);
                 mostrarAlerta("Permisos por cargo actualizados exitosamente. Los usuarios notarán los cambios al iniciar sesión.", "success");
@@ -1045,7 +1111,7 @@
                 btnMatriz.innerHTML = '<i class="fas fa-save me-1"></i> Guardar Permisos';
             }
         });
-
+ 
         window.cerrarSesionCompleta = function() {
             localStorage.removeItem('usuarioAlfatek');
             localStorage.removeItem('usuario_logueado_email');
@@ -1054,7 +1120,7 @@
             sessionStorage.clear();
             window.location.href = 'login.html';
         };
-
+ 
     </script>
 </body>
 </html>
